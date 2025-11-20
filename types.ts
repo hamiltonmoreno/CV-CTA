@@ -59,3 +59,90 @@ export interface AlertSubscription {
     phone: string;
   };
 }
+
+// Association Types
+export interface Member {
+  id: string;
+  name: string;
+  license: string;
+  role: UserRole;
+  status: 'Active' | 'Inactive';
+  quotaStatus: 'Up-to-date' | 'Overdue';
+}
+
+export interface MemberProfile extends Member {
+  email: string;
+  phone: string;
+  base: string;
+  admissionDate: string;
+  bio: string;
+  stats: {
+    votingParticipation: number; // 0-100%
+    meetingAttendance: number; // 0-100%
+    projectsInvolved: number; // count
+    quotaStreak: number; // months
+    engagementScore: number; // 0-100 calculated
+  };
+  badges: {
+    id: string;
+    name: string;
+    icon: string;
+    description: string;
+  }[];
+}
+
+export interface MemberHistoryLog {
+  id: string;
+  date: string;
+  action: string; // e.g., "Mudança de Status", "Atualização de Dados"
+  details: string; // e.g., "Ativo -> Licença Sem Vencimento"
+  performedBy: string; // "Sistema" or Admin Name
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  status: 'Planeamento' | 'Em Negociação' | 'Concluído' | 'Cancelado' | 'Aprovado';
+  progress: number; // 0 to 100
+  owner: string;
+}
+
+export interface VoteProposal {
+  id: string;
+  title: string;
+  description: string;
+  deadline: string;
+  options: {
+    label: string; // Sim, Não, Abstenção
+    count: number;
+  }[];
+  userVoted?: boolean; // Track if current user voted
+}
+
+export interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  type: 'Assembleia Geral' | 'Direção' | 'Extraordinária';
+  link?: string; // Google Meet link
+  minutesUrl?: string; // Link to PDF minutes
+}
+
+export interface FinancialRecord {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  type: 'Income' | 'Expense';
+  category: string;
+}
+
+export interface UserQuota {
+  month: string;
+  year: number;
+  amount: number;
+  status: 'Paid' | 'Pending'; // 'Pending' now means "Scheduled for deduction"
+  paidDate?: string;
+}

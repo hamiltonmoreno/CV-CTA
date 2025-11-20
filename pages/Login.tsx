@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, User, ArrowLeft, Plane, AlertCircle } from 'lucide-react';
+import { Lock, User, ArrowLeft, Plane, AlertCircle, ShieldCheck } from 'lucide-react';
+import { UserRole } from '../types';
 
 interface Props {
-  onLogin: () => void;
+  onLogin: (role: UserRole) => void;
 }
 
 const Login: React.FC<Props> = ({ onLogin }) => {
@@ -21,15 +22,25 @@ const Login: React.FC<Props> = ({ onLogin }) => {
 
     // Simulação de autenticação
     setTimeout(() => {
-      if (email && password) {
-        // Aceita qualquer credencial para demo, desde que preenchida
-        onLogin();
+      if (email === 'admin@cta.cv' && password === 'admin123') {
+        // Credenciais de Desenvolvedor/Admin
+        onLogin(UserRole.ADMIN);
+        navigate('/dashboard');
+      } else if (email && password) {
+        // Qualquer outra credencial entra como Controlador Padrão (Demo)
+        onLogin(UserRole.CONTROLLER);
         navigate('/dashboard');
       } else {
         setError('Por favor, preencha todos os campos.');
         setIsLoading(false);
       }
     }, 1000);
+  };
+
+  // Auto-fill for development convenience (Optional - remove in production)
+  const fillAdminCreds = () => {
+    setEmail('admin@cta.cv');
+    setPassword('admin123');
   };
 
   return (
@@ -126,7 +137,14 @@ const Login: React.FC<Props> = ({ onLogin }) => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          {/* Developer Shortcut */}
+          <div className="mt-6 text-center">
+             <button onClick={fillAdminCreds} className="text-xs text-gray-400 hover:text-cv-blue flex items-center justify-center gap-1 mx-auto border border-dashed border-gray-300 px-2 py-1 rounded hover:border-cv-blue transition-colors">
+                <ShieldCheck className="w-3 h-3" /> Auto-fill Admin (Dev Only)
+             </button>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-500">
               Ainda não tem acesso? <Link to="/register" className="text-cv-blue font-bold hover:underline">Solicitar registo</Link>
             </p>

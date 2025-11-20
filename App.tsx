@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import NotamsPage from './pages/Notams';
 import DocumentsPage from './pages/Documents';
 import Dashboard from './pages/Dashboard';
+import Association from './pages/Association';
 import Contact from './pages/Contact';
 import Careers from './pages/Careers';
 import News from './pages/News';
@@ -14,7 +15,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import PublicResources from './pages/PublicResources';
 import Chatbot from './components/Chatbot';
-import { OperationalStatus } from './types';
+import ScrollToTop from './components/ScrollToTop';
+import { OperationalStatus, UserRole } from './types';
 
 // Layout Wrapper for standard pages (Header + Nav + Content + Footer)
 const MainLayout: React.FC<{isLoggedIn: boolean, onLogout: () => void}> = ({ isLoggedIn, onLogout }) => {
@@ -39,26 +41,34 @@ const MainLayout: React.FC<{isLoggedIn: boolean, onLogout: () => void}> = ({ isL
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>(UserRole.PUBLIC);
+
+  const handleLogin = (role: UserRole) => {
+    setIsLoggedIn(true);
+    setUserRole(role);
+  };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUserRole(UserRole.PUBLIC);
     window.location.hash = '#/';
   };
 
   return (
     <HashRouter>
+      <ScrollToTop />
       <Routes>
         {/* Auth Routes (No Layout) */}
         <Route 
           path="/login" 
-          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={() => setIsLoggedIn(true)} />} 
+          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />} 
         />
         <Route 
           path="/register" 
           element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
         />
 
-        {/* Protected Dashboard Route (Uses specific layout or could use MainLayout if desired, kept separate for now based on previous logic) */}
+        {/* Protected Routes */}
         <Route 
           path="/dashboard" 
           element={
@@ -67,7 +77,25 @@ const App: React.FC = () => {
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
                  <Navbar isLoggedIn={isLoggedIn} onLogoutClick={handleLogout} />
                  <main className="flex-grow">
-                    <Dashboard />
+                    <Dashboard userRole={userRole} />
+                 </main>
+                 <Chatbot />
+              </div>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+
+        <Route 
+          path="/association" 
+          element={
+            isLoggedIn ? (
+              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                 <Navbar isLoggedIn={isLoggedIn} onLogoutClick={handleLogout} />
+                 <main className="flex-grow">
+                    <Association userRole={userRole} />
                  </main>
                  <Chatbot />
               </div>

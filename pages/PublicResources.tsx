@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, FileText, CloudSun, ArrowRight, BookOpen, Search, Wind, Info } from 'lucide-react';
+import { MapPin, FileText, CloudSun, ArrowRight, BookOpen, Search, Info, ExternalLink, Globe } from 'lucide-react';
 
 const PublicResources: React.FC = () => {
   return (
@@ -19,7 +19,7 @@ const PublicResources: React.FC = () => {
           <div className="max-w-3xl">
              <h1 className="text-4xl md:text-5xl font-bold mb-6">Centro de Recursos Públicos</h1>
              <p className="text-xl text-gray-300 leading-relaxed">
-               Acesso livre a informações aeronáuticas essenciais (AIS), documentação para pesquisa e ferramentas de planeamento de voo na FIR Sal.
+               Acesso livre a informações aeronáuticas essenciais (AIS), documentação oficial da AAC e ferramentas de planeamento de voo na FIR Sal.
              </p>
           </div>
         </div>
@@ -53,7 +53,7 @@ const PublicResources: React.FC = () => {
              </div>
              <h2 className="text-2xl font-bold text-gray-900 mb-3">Biblioteca & Pesquisa</h2>
              <p className="text-gray-600 mb-4">
-               Repositório público de manuais técnicos, regulamentação aérea (CV-CAR), cartas aeronáuticas e material de estudo para pilotos e controladores.
+               Repositório público de manuais técnicos, regulamentação aérea (CV-CAR) da AAC, cartas aeronáuticas e material de estudo.
              </p>
              <span className="text-sm font-bold text-cv-blue uppercase tracking-wide">Consultar Documentação</span>
           </Link>
@@ -61,17 +61,17 @@ const PublicResources: React.FC = () => {
         </div>
       </div>
 
-      {/* Additional Info Section (Weather & Tools) */}
+      {/* Additional Info Section (Weather) */}
       <div className="max-w-7xl mx-auto px-4 mt-16">
          <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
             <Info className="w-6 h-6 text-gray-400" />
             Informação de Apoio ao Voo
          </h2>
          
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <div className="w-full">
             
             {/* Simulated Weather Widget */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full">
                <div className="flex items-center justify-between mb-6">
                   <h3 className="font-bold text-gray-900 flex items-center gap-2">
                      <CloudSun className="w-5 h-5 text-amber-500" />
@@ -80,7 +80,7 @@ const PublicResources: React.FC = () => {
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold">Live</span>
                </div>
                
-               <div className="space-y-4 font-mono text-sm">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-sm">
                   <div className="p-3 bg-gray-50 rounded border-l-4 border-green-500">
                      <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span>GVAC (Sal)</span>
@@ -98,36 +98,54 @@ const PublicResources: React.FC = () => {
                </div>
             </div>
 
-            {/* Quick Tools Links */}
-            <div className="bg-blue-50 rounded-xl border border-blue-100 p-6">
-               <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
-                  <Wind className="w-5 h-5" />
-                  Links Úteis
-               </h3>
-               <ul className="space-y-3">
-                  <li>
-                     <a href="#" className="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 bg-white p-3 rounded border border-transparent hover:border-blue-200 transition">
-                        <span>Submeter Plano de Voo (FPL)</span>
-                        <ArrowRight className="w-4 h-4" />
-                     </a>
-                  </li>
-                  <li>
-                     <a href="#" className="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 bg-white p-3 rounded border border-transparent hover:border-blue-200 transition">
-                        <span>Calculadora de Performance</span>
-                        <ArrowRight className="w-4 h-4" />
-                     </a>
-                  </li>
-                  <li>
-                     <a href="#" className="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 bg-white p-3 rounded border border-transparent hover:border-blue-200 transition">
-                        <span>Publicações AIP (eAIP)</span>
-                        <ArrowRight className="w-4 h-4" />
-                     </a>
-                  </li>
-               </ul>
-            </div>
-
          </div>
       </div>
+
+      {/* Aeronautical Publications Section */}
+      <div className="max-w-7xl mx-auto px-4 mt-12">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Globe className="w-6 h-6 text-cv-blue" />
+              Publicações Oficiais (Fonte: aac.cv)
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">Acesso direto ao portal da Agência de Aviação Civil (AAC).</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+            {/* CV-CARs */}
+            <a href="https://www.aac.cv/legislacao/regulamentos" target="_blank" rel="noopener noreferrer" className="p-6 hover:bg-gray-50 transition group block">
+               <div className="flex items-center justify-between mb-3">
+                 <span className="bg-blue-100 text-cv-blue font-bold px-2 py-1 rounded text-[10px] uppercase">CV-CAR</span>
+                 <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-cv-blue" />
+               </div>
+               <h3 className="font-bold text-gray-900 mb-2 group-hover:text-cv-blue">Regulamentos (CV-CAR)</h3>
+               <p className="text-sm text-gray-600">Aceda à base de dados completa dos Regulamentos de Segurança Aérea de Cabo Verde.</p>
+            </a>
+
+            {/* AICs */}
+            <a href="https://www.aac.cv/publicacoes/circulares-de-informacao-aeronautica" target="_blank" rel="noopener noreferrer" className="p-6 hover:bg-gray-50 transition group block">
+               <div className="flex items-center justify-between mb-3">
+                 <span className="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-[10px] uppercase">AIC</span>
+                 <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-cv-blue" />
+               </div>
+               <h3 className="font-bold text-gray-900 mb-2 group-hover:text-cv-blue">Circulares de Informação</h3>
+               <p className="text-sm text-gray-600">Consulta de Circulares de Informação Aeronáutica (AIC) publicadas pela autoridade.</p>
+            </a>
+
+            {/* Legislation */}
+            <a href="https://www.aac.cv/legislacao" target="_blank" rel="noopener noreferrer" className="p-6 hover:bg-gray-50 transition group block">
+               <div className="flex items-center justify-between mb-3">
+                 <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded text-[10px] uppercase">LEIS</span>
+                 <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-cv-blue" />
+               </div>
+               <h3 className="font-bold text-gray-900 mb-2 group-hover:text-cv-blue">Legislação Nacional</h3>
+               <p className="text-sm text-gray-600">Decretos-lei e portarias que regem o setor da aviação civil em Cabo Verde.</p>
+            </a>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

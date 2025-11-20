@@ -67,7 +67,7 @@ const Contact: React.FC = () => {
     let isValid = true;
 
     (Object.keys(formData) as Array<keyof typeof formData>).forEach(key => {
-      const error = validateField(key, formData[key]);
+      const error = validateField(key as string, formData[key]);
       if (error) {
         newErrors[key] = error;
         isValid = false;
