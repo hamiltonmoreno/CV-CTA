@@ -1,0 +1,5 @@
+{
+  "name": "CV-CTA Portal",
+  "description": "Portal Oficial para Controladores de Tráfego Aéreo de Cabo Verde (CV-CTA). Inclui informações operacionais, NOTAMs, manuais e intranet segura.",
+  "requestFramePermissions": []
+}
