@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User, ArrowLeft, Plane, AlertCircle } from 'lucide-react';
 
 interface Props {
@@ -128,7 +128,7 @@ const Login: React.FC<Props> = ({ onLogin }) => {
 
           <div className="mt-8 pt-6 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-500">
-              Ainda não tem acesso? <a href="#/contact" className="text-cv-blue font-bold hover:underline">Solicitar registo</a>
+              Ainda não tem acesso? <Link to="/register" className="text-cv-blue font-bold hover:underline">Solicitar registo</Link>
             </p>
           </div>
         </div>

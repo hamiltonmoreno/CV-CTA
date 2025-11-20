@@ -10,7 +10,7 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'Exercício em escala real programado para 22 de Outubro de 2025. Todos os controladores devem rever os procedimentos de emergência e coordenação com a proteção civil.',
     date: '2025-10-14',
     category: 'Operacional',
-    imageUrl: 'https://images.unsplash.com/photo-1508523724795-06eb068b114e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1524592714635-d77511a4834d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   },
   {
     id: '2',
@@ -18,7 +18,7 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'Atualização mandatória dos protocolos de hand-off entre ACC Sal e Dakar Oceanic. As mudanças visam otimizar o fluxo na rota Atlântico Sul.',
     date: '2025-10-10',
     category: 'Formação',
-    imageUrl: 'https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1468183654773-77e2e09d0501?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   },
   {
     id: '3',
@@ -26,7 +26,7 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'Abertura de concurso público para 15 novas vagas para formação de controladores de tráfego aéreo. O curso terá duração de 18 meses.',
     date: '2025-10-05',
     category: 'Institucional',
-    imageUrl: 'https://images.unsplash.com/photo-1527685285809-655585d329dc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1542296332-2e44a99cfef9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   },
   {
     id: '4',
@@ -34,7 +34,7 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'A ASA concluiu a instalação do novo sistema MSSR na ilha de Santiago, aumentando a cobertura radar na TMA da Praia para níveis inferiores.',
     date: '2025-09-28',
     category: 'Operacional',
-    imageUrl: 'https://images.unsplash.com/photo-1580835846131-2d38f692211e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1474302770737-173ee21bab63?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   },
   {
     id: '5',
@@ -42,7 +42,7 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'Reconhecimento internacional pela excelência na gestão do espaço aéreo atlântico e compromisso com a redução de emissões de carbono.',
     date: '2025-09-15',
     category: 'Institucional',
-    imageUrl: 'https://images.unsplash.com/photo-1569629743817-70d8db6c323b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   },
   {
     id: '6',
@@ -50,7 +50,7 @@ export const MOCK_NEWS: NewsItem[] = [
     summary: 'Inscrições abertas para o programa intensivo de manutenção de proficiência linguística. Aulas presenciais no Sal e Praia.',
     date: '2025-09-01',
     category: 'Formação',
-    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1559297434-fae8a1916a79?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   }
 ];
 

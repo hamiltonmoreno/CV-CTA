@@ -17,7 +17,7 @@ const Navbar: React.FC<Props> = ({ isLoggedIn, onLogoutClick }) => {
     { name: 'Institucional', path: '/' },
     { name: 'Notícias', path: '/news' },
     { name: 'Profissão & Carreira', path: '/careers' },
-    { name: 'Recursos Públicos', path: '/notams' },
+    { name: 'Recursos Públicos', path: '/resources' },
     { name: 'Contactos', path: '/contact' },
   ];
 

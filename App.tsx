@@ -1,21 +1,43 @@
 
 import React, { useState } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import OperationalHeader from './components/OperationalHeader';
 import Home from './pages/Home';
-import NotamsPage from './pages/Notams.tsx';
-import DocumentsPage from './pages/Documents.tsx';
+import NotamsPage from './pages/Notams';
+import DocumentsPage from './pages/Documents';
 import Dashboard from './pages/Dashboard';
 import Contact from './pages/Contact';
 import Careers from './pages/Careers';
 import News from './pages/News';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import PublicResources from './pages/PublicResources';
 import Chatbot from './components/Chatbot';
 import { OperationalStatus } from './types';
 
+// Layout Wrapper for standard pages (Header + Nav + Content + Footer)
+const MainLayout: React.FC<{isLoggedIn: boolean, onLogout: () => void}> = ({ isLoggedIn, onLogout }) => {
+  return (
+    <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900 relative">
+      <OperationalHeader 
+        status={OperationalStatus.NORMAL} 
+        date="14 OUT 2025"
+      />
+      <Navbar 
+        isLoggedIn={isLoggedIn} 
+        onLogoutClick={onLogout}
+      />
+      <main className="flex-grow">
+         <Outlet />
+      </main>
+      <Chatbot />
+      <Footer />
+    </div>
+  );
+};
+
 const App: React.FC = () => {
-  // Simple state simulation for authentication
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleLogout = () => {
@@ -26,81 +48,49 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <Routes>
-        {/* Routes with Navbar/Header Layout */}
-        <Route element={
-          <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900 relative">
-            <OperationalHeader 
-              status={OperationalStatus.NORMAL} 
-              date="14 OUT 2025"
-            />
-            <Navbar 
-              isLoggedIn={isLoggedIn} 
-              onLogoutClick={handleLogout}
-            />
-            <main className="flex-grow">
-               <Home />
-            </main>
-            <Chatbot />
-            <Footer />
-          </div>
-        } path="/" />
+        {/* Auth Routes (No Layout) */}
+        <Route 
+          path="/login" 
+          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={() => setIsLoggedIn(true)} />} 
+        />
+        <Route 
+          path="/register" 
+          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
+        />
 
-        {/* Define explicit routes that need layout wrapper if we want them separate from Home */}
-        {/* For simplicity in this structure, I will wrap individual pages with a layout component or render them directly if they include nav */}
+        {/* Protected Dashboard Route (Uses specific layout or could use MainLayout if desired, kept separate for now based on previous logic) */}
+        <Route 
+          path="/dashboard" 
+          element={
+            isLoggedIn ? (
+              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                 <Navbar isLoggedIn={isLoggedIn} onLogoutClick={handleLogout} />
+                 <main className="flex-grow">
+                    <Dashboard />
+                 </main>
+                 <Chatbot />
+              </div>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+
+        {/* Public Routes (Wrapped in MainLayout) */}
+        <Route element={<MainLayout isLoggedIn={isLoggedIn} onLogout={handleLogout} />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/resources" element={<PublicResources />} />
+          <Route path="/notams" element={<NotamsPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/contact" element={<Contact />} />
+        </Route>
+
+        {/* Catch all - Redirect to Home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
-      <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900 relative">
-        {/* Conditionally render Header/Navbar unless on Login page */}
-        <Routes>
-          <Route path="/login" element={null} />
-          <Route path="*" element={
-            <>
-              <OperationalHeader 
-                status={OperationalStatus.NORMAL} 
-                date="14 OUT 2025"
-              />
-              <Navbar 
-                isLoggedIn={isLoggedIn} 
-                onLogoutClick={handleLogout}
-              />
-            </>
-          } />
-        </Routes>
-        
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/notams" element={<NotamsPage />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/contact" element={<Contact />} />
-            
-            {/* Login Page */}
-            <Route 
-              path="/login" 
-              element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={() => setIsLoggedIn(true)} />} 
-            />
-            
-            {/* Protected Route */}
-            <Route 
-              path="/dashboard" 
-              element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />} 
-            />
-          </Routes>
-        </main>
-
-        {/* Footer and Chatbot only on non-login pages */}
-        <Routes>
-           <Route path="/login" element={null} />
-           <Route path="*" element={
-             <>
-               <Chatbot />
-               <Footer />
-             </>
-           } />
-        </Routes>
-      </div>
     </HashRouter>
   );
 };
