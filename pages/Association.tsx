@@ -1,27 +1,37 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Users, Vote, DollarSign, Calendar, FileText, 
   Plus, ExternalLink, CheckCircle2, XCircle, AlertCircle, 
   PieChart, TrendingUp, Download, Video, Shield, ChevronRight, Clock,
-  History, CreditCard, Briefcase, User, Award, Star, Zap, MapPin, Phone, Mail
+  History, CreditCard, Briefcase, User, Award, Star, Zap, MapPin, Phone, Mail, MessageSquare, Tag
 } from 'lucide-react';
 import { 
   ASSOCIATION_PROJECTS, VOTING_PROPOSALS, MEETINGS, 
-  FINANCIAL_RECORDS, USER_QUOTAS, MOCK_MEMBER_HISTORY, MOCK_MEMBER_PROFILE 
+  FINANCIAL_RECORDS, USER_QUOTAS, MOCK_MEMBER_HISTORY, MOCK_MEMBER_PROFILE, MOCK_FORUM_THREADS 
 } from '../constants';
 import { UserRole, VoteProposal, FinancialRecord } from '../types';
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import Breadcrumbs from '../components/Breadcrumbs';
+import DigitalCard from '../components/DigitalCard';
 
 interface Props {
   userRole?: UserRole;
 }
 
+type TabType = 'overview' | 'profile' | 'voting' | 'finance' | 'projects' | 'meetings' | 'forum';
+
 const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'voting' | 'finance' | 'projects' | 'meetings'>('overview');
-  const [votes, setVotes] = useState<VoteProposal[]>(VOTING_PROPOSALS);
-  const [expenses, setExpenses] = useState<FinancialRecord[]>(FINANCIAL_RECORDS);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as TabType) || 'overview';
+
+  const [votes, setVotes] = React.useState<VoteProposal[]>(VOTING_PROPOSALS);
+  const [expenses, setExpenses] = React.useState<FinancialRecord[]>(FINANCIAL_RECORDS);
+
+  const setActiveTab = (tab: TabType) => {
+    setSearchParams({ tab });
+  };
 
   // Mock Vote Action
   const handleVote = (proposalId: string, optionLabel: string) => {
@@ -30,11 +40,18 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
         return {
           ...p,
           userVoted: true,
+          votedOption: optionLabel,
+          votedDate: new Date().toISOString().split('T')[0],
           options: p.options.map(o => o.label === optionLabel ? { ...o, count: o.count + 1 } : o)
         };
       }
       return p;
     }));
+  };
+
+  // Mock Receipt Download
+  const handleDownloadReceipt = (month: string) => {
+    alert(`A descarregar recibo de pagamento de ${month}...`);
   };
 
   // Financial Chart Data
@@ -82,19 +99,20 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
 
       {/* Navigation Tabs (Overlapping Header) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-2 flex flex-wrap gap-2">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-2 flex flex-wrap gap-2 overflow-x-auto">
           {[
             { id: 'overview', icon: TrendingUp, label: 'Visão Geral' },
             { id: 'profile', icon: User, label: 'Meu Perfil' },
             { id: 'finance', icon: DollarSign, label: 'Tesouraria' },
             { id: 'voting', icon: Vote, label: 'Votação' },
+            { id: 'forum', icon: MessageSquare, label: 'Fórum' },
             { id: 'projects', icon: FileText, label: 'Projetos' },
             { id: 'meetings', icon: Video, label: 'Reuniões' },
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+              onClick={() => setActiveTab(tab.id as TabType)}
+              className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-gray-900 text-white shadow-md'
                   : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
@@ -254,6 +272,11 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  
+                 {/* NEW: DIGITAL CARD SECTION */}
+                 <div className="lg:col-span-1">
+                    <DigitalCard member={profile} />
+                 </div>
+
                  {/* Performance Metrics */}
                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
@@ -349,173 +372,136 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
            </div>
         )}
 
-        {/* TAB: FINANCE */}
-        {activeTab === 'finance' && (
-          <div className="space-y-6 animate-in fade-in">
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Financial Overview Chart */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                   <div className="flex justify-between items-center mb-6">
-                      <h3 className="font-bold text-gray-800">Transparência Financeira (Ano Corrente)</h3>
-                      {isAdmin && <button className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full">+ Lançar Gasto</button>}
-                   </div>
-                   <div className="h-64 flex items-center justify-center">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80}>
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                          <Tooltip formatter={(value: number) => `${value.toLocaleString()} CVE`} />
-                        </RechartsPie>
-                      </ResponsiveContainer>
-                      <div className="absolute text-center">
-                         <p className="text-xs text-gray-400">Saldo Líquido</p>
-                         <p className="text-xl font-bold text-gray-900">{balance.toLocaleString()}</p>
-                      </div>
-                   </div>
-                   <div className="flex justify-center gap-6 mt-4">
-                      <div className="flex items-center gap-2">
-                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                         <span className="text-sm text-gray-600">Receitas: {income.toLocaleString()} CVE</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                         <span className="text-sm text-gray-600">Despesas: {expense.toLocaleString()} CVE</span>
-                      </div>
-                   </div>
-                </div>
+        {/* TAB: FORUM (NEW) */}
+        {activeTab === 'forum' && (
+           <div className="space-y-6 animate-in fade-in">
+              <div className="flex justify-between items-center">
+                 <h2 className="text-xl font-bold text-gray-900">Fórum de Discussão Interna</h2>
+                 <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center gap-2">
+                    <Plus className="w-4 h-4" /> Novo Tópico
+                 </button>
+              </div>
 
-                {/* My Quotas Statement */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                   <div className="mb-4">
-                      <h3 className="font-bold text-gray-800 mb-2">Extrato de Cotas</h3>
-                      <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg flex items-start gap-2">
-                         <Briefcase className="w-4 h-4 shrink-0 mt-0.5" />
-                         <p>
-                           <strong>Nota Informativa:</strong> O pagamento das cotas é efetuado automaticamente via desconto na folha de vencimento mensal. Este quadro serve apenas para conferência.
-                         </p>
-                      </div>
-                   </div>
-                   
-                   <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
-                      {USER_QUOTAS.map((quota, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
-                           <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-full ${quota.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
-                                 {quota.status === 'Paid' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                              </div>
-                              <div>
-                                 <p className="font-medium text-gray-900">{quota.month} {quota.year}</p>
-                                 <p className="text-xs text-gray-500">
-                                   {quota.status === 'Paid' 
-                                     ? `Descontado em ${quota.paidDate}` 
-                                     : 'Agendado para final do mês'}
-                                 </p>
-                              </div>
-                           </div>
-                           <div className="text-right">
-                              <p className="font-bold text-gray-900">{quota.amount} CVE</p>
-                              <p className="text-[10px] text-gray-400 uppercase tracking-wider">
-                                {quota.status === 'Paid' ? 'Processado' : 'Automático'}
-                              </p>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-             </div>
-
-             {/* Recent Transactions Table */}
-             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                   <h3 className="font-bold text-gray-800">Últimos Movimentos da Tesouraria</h3>
-                </div>
-                <div className="overflow-x-auto">
-                   <table className="w-full text-sm text-left">
-                      <thead className="text-xs text-gray-500 uppercase bg-gray-50">
-                         <tr>
-                            <th className="px-6 py-3">Data</th>
-                            <th className="px-6 py-3">Descrição</th>
-                            <th className="px-6 py-3">Categoria</th>
-                            <th className="px-6 py-3 text-right">Valor</th>
-                         </tr>
-                      </thead>
-                      <tbody>
-                         {expenses.map((record) => (
-                            <tr key={record.id} className="bg-white border-b hover:bg-gray-50">
-                               <td className="px-6 py-4 font-mono text-gray-500">{record.date}</td>
-                               <td className="px-6 py-4 font-medium text-gray-900">{record.description}</td>
-                               <td className="px-6 py-4">
-                                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{record.category}</span>
-                               </td>
-                               <td className={`px-6 py-4 text-right font-bold ${record.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
-                                  {record.type === 'Income' ? '+' : '-'} {record.amount.toLocaleString()} CVE
-                               </td>
-                            </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                </div>
-             </div>
-          </div>
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                 {MOCK_FORUM_THREADS.map(thread => (
+                    <div key={thread.id} className="p-6 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer">
+                       <div className="flex items-start justify-between">
+                          <div>
+                             <div className="flex items-center gap-2 mb-2">
+                                {thread.tags.map(tag => (
+                                   <span key={tag} className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
+                                      <Tag className="w-3 h-3" /> {tag}
+                                   </span>
+                                ))}
+                             </div>
+                             <h3 className="text-lg font-bold text-gray-900 mb-1">{thread.title}</h3>
+                             <p className="text-sm text-gray-500">Iniciado por <span className="font-medium text-gray-800">{thread.author}</span> • {thread.date}</p>
+                          </div>
+                          <div className="flex items-center gap-6 text-sm text-gray-500">
+                             <div className="text-center">
+                                <span className="block font-bold text-gray-900 text-lg">{thread.replies}</span>
+                                <span className="text-xs">Respostas</span>
+                             </div>
+                             <div className="text-right hidden sm:block">
+                                <p className="text-xs">Última atividade</p>
+                                <p className="font-medium text-gray-800">{thread.lastActivity}</p>
+                             </div>
+                             <ChevronRight className="w-5 h-5 text-gray-300" />
+                          </div>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           </div>
         )}
 
         {/* TAB: VOTING */}
         {activeTab === 'voting' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
-             {votes.map((vote) => (
-                <div key={vote.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
-                   <div className="flex justify-between items-start mb-4">
-                      <div>
-                         <span className={`text-xs font-bold px-2 py-1 rounded uppercase ${vote.userVoted ? 'bg-gray-100 text-gray-600' : 'bg-blue-100 text-blue-600'}`}>
-                            {vote.userVoted ? 'Voto Registado' : 'Votação Aberta'}
-                         </span>
-                         <h3 className="text-xl font-bold text-gray-900 mt-2">{vote.title}</h3>
-                      </div>
-                      <div className="text-xs text-gray-500 text-right">
-                         <p>Prazo:</p>
-                         <p className="font-mono">{vote.deadline}</p>
-                      </div>
-                   </div>
-                   <p className="text-gray-600 mb-6 flex-1">{vote.description}</p>
-                   
-                   {/* Results or Voting Options */}
-                   <div className="space-y-3">
-                      {vote.options.map((option) => {
-                         const totalVotes = vote.options.reduce((acc, curr) => acc + curr.count, 0);
-                         const percentage = totalVotes > 0 ? Math.round((option.count / totalVotes) * 100) : 0;
-                         
-                         return (
-                            <div key={option.label}>
-                               <div className="flex justify-between text-sm mb-1">
-                                  <span className="font-medium text-gray-700">{option.label}</span>
-                                  {vote.userVoted && <span className="text-gray-500">{percentage}% ({option.count})</span>}
-                               </div>
-                               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full ${option.label === 'Favor' ? 'bg-green-500' : option.label === 'Contra' ? 'bg-red-500' : 'bg-gray-400'}`}
-                                    style={{ width: vote.userVoted ? `${percentage}%` : '0%' }}
-                                  ></div>
-                               </div>
-                               {!vote.userVoted && (
-                                  <button 
-                                    onClick={() => handleVote(vote.id, option.label)}
-                                    className="mt-2 w-full py-2 border border-gray-200 rounded hover:bg-gray-50 text-sm font-medium transition"
-                                  >
-                                     Votar {option.label}
-                                  </button>
-                               )}
-                            </div>
-                         );
-                      })}
-                   </div>
-                </div>
-             ))}
-             {isAdmin && (
-               <button className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition">
-                  <Plus className="w-8 h-8 mb-2" />
-                  <span className="font-medium">Criar Nova Proposta</span>
-               </button>
+          <div className="space-y-12 animate-in fade-in">
+             {/* Active Votes */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {votes.filter(v => !v.userVoted).length > 0 ? (
+                  votes.filter(v => !v.userVoted).map((vote) => (
+                    <div key={vote.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
+                       <div className="flex justify-between items-start mb-4">
+                          <div>
+                             <span className="text-xs font-bold px-2 py-1 rounded uppercase bg-blue-100 text-blue-600">
+                                Votação Aberta
+                             </span>
+                             <h3 className="text-xl font-bold text-gray-900 mt-2">{vote.title}</h3>
+                          </div>
+                          <div className="text-xs text-gray-500 text-right">
+                             <p>Prazo:</p>
+                             <p className="font-mono">{vote.deadline}</p>
+                          </div>
+                       </div>
+                       <p className="text-gray-600 mb-6 flex-1">{vote.description}</p>
+                       
+                       {/* Voting Options */}
+                       <div className="space-y-3">
+                          {vote.options.map((option) => (
+                             <div key={option.label}>
+                                <button 
+                                  onClick={() => handleVote(vote.id, option.label)}
+                                  className="mt-2 w-full py-2 border border-gray-200 rounded hover:bg-gray-50 text-sm font-medium transition"
+                                >
+                                   Votar {option.label}
+                                </button>
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                    <p className="text-gray-500">Não há votações ativas de momento.</p>
+                  </div>
+                )}
+                
+                {isAdmin && (
+                  <button className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition h-full min-h-[250px]">
+                     <Plus className="w-8 h-8 mb-2" />
+                     <span className="font-medium">Criar Nova Proposta</span>
+                  </button>
+                )}
+             </div>
+
+             {/* Voting History Section */}
+             {votes.filter(v => v.userVoted).length > 0 && (
+               <div>
+                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                   <History className="w-5 h-5 text-gray-500" /> Histórico de Votação
+                 </h3>
+                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                   <table className="w-full text-sm text-left">
+                     <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                       <tr>
+                         <th className="px-6 py-3">Proposta</th>
+                         <th className="px-6 py-3">Data do Voto</th>
+                         <th className="px-6 py-3">A sua Opção</th>
+                         <th className="px-6 py-3">Status</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-100">
+                       {votes.filter(v => v.userVoted).map((vote) => (
+                         <tr key={vote.id} className="hover:bg-gray-50">
+                           <td className="px-6 py-4 font-medium text-gray-900">{vote.title}</td>
+                           <td className="px-6 py-4 font-mono text-gray-500">{vote.votedDate || 'N/A'}</td>
+                           <td className="px-6 py-4">
+                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                               <CheckCircle2 className="w-3 h-3" />
+                               {vote.votedOption}
+                             </span>
+                           </td>
+                           <td className="px-6 py-4">
+                             <span className="text-xs text-gray-500">Voto Registado</span>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
              )}
           </div>
         )}
@@ -621,6 +607,125 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
                  </div>
               </div>
            </div>
+        )}
+
+        {/* TAB: FINANCE */}
+        {activeTab === 'finance' && (
+          <div className="space-y-6 animate-in fade-in">
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Financial Overview Chart */}
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                   <div className="flex justify-between items-center mb-6">
+                      <h3 className="font-bold text-gray-800">Transparência Financeira (Ano Corrente)</h3>
+                      {isAdmin && <button className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full">+ Lançar Gasto</button>}
+                   </div>
+                   <div className="h-64 flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80}>
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                          <Tooltip formatter={(value: number) => `${value.toLocaleString()} CVE`} />
+                        </RechartsPie>
+                      </ResponsiveContainer>
+                      <div className="absolute text-center">
+                         <p className="text-xs text-gray-400">Saldo Líquido</p>
+                         <p className="text-xl font-bold text-gray-900">{balance.toLocaleString()}</p>
+                      </div>
+                   </div>
+                   <div className="flex justify-center gap-6 mt-4">
+                      <div className="flex items-center gap-2">
+                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                         <span className="text-sm text-gray-600">Receitas: {income.toLocaleString()} CVE</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                         <span className="text-sm text-gray-600">Despesas: {expense.toLocaleString()} CVE</span>
+                      </div>
+                   </div>
+                </div>
+
+                {/* My Quotas Statement */}
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                   <div className="mb-4">
+                      <h3 className="font-bold text-gray-800 mb-2">Extrato de Cotas</h3>
+                      <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg flex items-start gap-2">
+                         <Briefcase className="w-4 h-4 shrink-0 mt-0.5" />
+                         <p>
+                           <strong>Nota Informativa:</strong> O pagamento das cotas é efetuado automaticamente via desconto na folha de vencimento mensal. Este quadro serve apenas para conferência.
+                         </p>
+                      </div>
+                   </div>
+                   
+                   <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
+                      {USER_QUOTAS.map((quota, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                           <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-full ${quota.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+                                 {quota.status === 'Paid' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                 <p className="font-medium text-gray-900">{quota.month} {quota.year}</p>
+                                 <p className="text-xs text-gray-500">
+                                   {quota.status === 'Paid' 
+                                     ? `Descontado em ${quota.paidDate}` 
+                                     : 'Agendado para final do mês'}
+                                 </p>
+                              </div>
+                           </div>
+                           <div className="text-right">
+                              <p className="font-bold text-gray-900">{quota.amount} CVE</p>
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+                                {quota.status === 'Paid' ? 'Processado' : 'Automático'}
+                              </p>
+                              {quota.status === 'Paid' && (
+                                <button 
+                                  onClick={() => handleDownloadReceipt(quota.month)}
+                                  className="text-[10px] text-blue-600 font-medium hover:underline flex items-center justify-end gap-1 w-full mt-1"
+                                >
+                                  <Download className="w-3 h-3" /> Recibo
+                                </button>
+                              )}
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+             </div>
+
+             {/* Recent Transactions Table */}
+             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                   <h3 className="font-bold text-gray-800">Últimos Movimentos da Tesouraria</h3>
+                </div>
+                <div className="overflow-x-auto">
+                   <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-500 uppercase bg-gray-50">
+                         <tr>
+                            <th className="px-6 py-3">Data</th>
+                            <th className="px-6 py-3">Descrição</th>
+                            <th className="px-6 py-3">Categoria</th>
+                            <th className="px-6 py-3 text-right">Valor</th>
+                         </tr>
+                      </thead>
+                      <tbody>
+                         {expenses.map((record) => (
+                            <tr key={record.id} className="bg-white border-b hover:bg-gray-50">
+                               <td className="px-6 py-4 font-mono text-gray-500">{record.date}</td>
+                               <td className="px-6 py-4 font-medium text-gray-900">{record.description}</td>
+                               <td className="px-6 py-4">
+                                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{record.category}</span>
+                               </td>
+                               <td className={`px-6 py-4 text-right font-bold ${record.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
+                                  {record.type === 'Income' ? '+' : '-'} {record.amount.toLocaleString()} CVE
+                               </td>
+                            </tr>
+                         ))}
+                      </tbody>
+                   </table>
+                </div>
+             </div>
+          </div>
         )}
 
       </div>

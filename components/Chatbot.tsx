@@ -1,34 +1,46 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Loader2, Bot, FileText, BrainCircuit } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Bot, FileText, BrainCircuit, Globe, Paperclip } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { MOCK_DOCS, DOC_CONTENTS } from '../constants';
+import { KnowledgeItem } from '../types';
 
 interface Message {
   id: string;
   role: 'user' | 'model';
   text: string;
   sources?: string[]; // Used to show which docs were used
+  grounding?: boolean; // Used to show if web search was used
+}
+
+interface Props {
+  knowledgeBase: KnowledgeItem[];
 }
 
 // System instruction defines Persona and Constraints
 const SYSTEM_INSTRUCTION = `
 Você é o Assistente Virtual Inteligente do Portal CV-CTA (Controladores de Tráfego Aéreo de Cabo Verde).
-A sua função é responder a perguntas baseando-se ESTRITAMENTE no contexto dos documentos fornecidos na mensagem.
 
-REGRAS:
-1. Analise profundamente o "CONTEXTO RECUPERADO".
-2. Se a resposta estiver no contexto, cite o nome do documento ou a versão se disponível.
-3. Se a resposta NÃO estiver no contexto, diga: "Desculpe, não encontrei essa informação nos documentos disponíveis (Manuais TWR, Fraseologia ou Regulamentos)."
-4. Não invente procedimentos que não estejam no contexto.
-5. Mantenha um tom profissional, técnico e direto.
+FONTES DE INFORMAÇÃO:
+1. **Contexto Local**: Utilize prioritariamente os textos dos manuais e regulamentos nacionais (CV-CAR) fornecidos no prompt.
+2. **Padrões Internacionais (ICAO)**: Você possui vasto conhecimento sobre os Anexos da ICAO (especialmente Anexos 2, 11 e Doc 4444). Utilize este conhecimento como "Standard" quando a regulamentação local for omissa ou quando o utilizador pedir esclarecimentos sobre normas internacionais.
+3. **Busca Web**: Você tem permissão e DEVE utilizar a ferramenta de Busca (Google Search) para consultar informações atualizadas diretamente em:
+   - site **www.aac.cv** (Agência de Aviação Civil)
+   - site **www.asa.cv** (Aeroportos e Segurança Aérea)
+   - sites internacionais relevantes (ICAO, IATA, EUROCONTROL, FAA) para confirmar padrões globais.
+
+REGRAS DE RESPOSTA:
+1. Se a resposta estiver no "CONTEXTO RECUPERADO" (Local), cite o documento local (ex: CV-CAR 11).
+2. Se a resposta NÃO estiver no contexto local, utilize os Padrões ICAO (ex: "De acordo com o Doc 4444 da ICAO...").
+3. Se precisar de dados vivos ou legislação muito recente, USE A BUSCA WEB e cite a fonte (ex: "Segundo o site da AAC...").
+4. Não invente procedimentos.
+5. Mantenha um tom profissional, técnico e direto (Fraseologia Padrão quando aplicável).
 `;
 
-const Chatbot: React.FC = () => {
+const Chatbot: React.FC<Props> = ({ knowledgeBase }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { id: '0', role: 'model', text: 'Olá! Sou o assistente virtual do CV-CTA. Posso consultar os manuais de operações, fraseologia e regulamentos da FIR Sal. Como posso ajudar?' }
+    { id: '0', role: 'model', text: 'Olá! Sou o assistente virtual do CV-CTA. Posso consultar manuais internos, regulamentos nacionais (AAC) e padrões internacionais (ICAO). Como posso ajudar?' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,48 +54,50 @@ const Chatbot: React.FC = () => {
   }, [messages, isOpen]);
 
   // Simple RAG Retrieval Logic (Client-Side)
-  const retrieveContext = (query: string): { contextText: string, sourceTitles: string[] } => {
+  // Returns the context text string AND a list of full item objects (for media attachment)
+  const retrieveContext = (query: string): { contextText: string, sourceTitles: string[], retrievedItems: KnowledgeItem[] } => {
     const queryLower = query.toLowerCase();
     const relevantChunks: string[] = [];
     const sources: Set<string> = new Set();
+    const retrievedItems: KnowledgeItem[] = [];
 
-    // Search through Document Metadata and Content
-    MOCK_DOCS.forEach(doc => {
-      const content = DOC_CONTENTS[doc.id];
+    // Search through Knowledge Base (Metadata + Content)
+    knowledgeBase.forEach(doc => {
       const titleMatch = doc.title.toLowerCase().includes(queryLower);
-      const contentMatch = content ? content.toLowerCase().includes(queryLower) : false;
+      const contentMatch = doc.content.toLowerCase().includes(queryLower);
 
       // If the user asks about a specific doc title, or the content matches keywords
       if (titleMatch || contentMatch) {
         sources.add(doc.title);
+        retrievedItems.push(doc);
         relevantChunks.push(`
---- INÍCIO DOCUMENTO ---
+--- INÍCIO DOCUMENTO LOCAL ---
 ID: ${doc.id}
 TÍTULO: ${doc.title}
-VERSÃO: ${doc.version}
 CATEGORIA: ${doc.category}
-CONTEÚDO:
-${content || "Conteúdo não indexado."}
---- FIM DOCUMENTO ---
+ATUALIZADO EM: ${doc.lastUpdated}
+ANEXO: ${doc.mediaData ? 'Sim (Disponível para análise)' : 'Não'}
+CONTEÚDO/DESCRIÇÃO:
+${doc.content}
+--- FIM DOCUMENTO LOCAL ---
         `);
       }
     });
 
-    // If no specific matches found, but query is generic, we might return a default subset 
-    // or return empty to force the "I don't know" response.
-    // For this demo, if empty, we try to be helpful by returning everything if query contains "manual" or "documento"
-    if (relevantChunks.length === 0 && (queryLower.includes('manual') || queryLower.includes('regra'))) {
-       MOCK_DOCS.forEach(doc => {
-         if (DOC_CONTENTS[doc.id]) {
-           relevantChunks.push(`RESUMO ${doc.title}: ${DOC_CONTENTS[doc.id].substring(0, 200)}...`);
-           sources.add(doc.title + " (Resumo)");
-         }
-       });
+    // Always add the generic ICAO pointer if not already added, to ensure the AI knows it can use generic knowledge
+    const icaoDoc = knowledgeBase.find(k => k.id === 'INTL-STD-ICAO');
+    if (icaoDoc && !sources.has(icaoDoc.title)) {
+        relevantChunks.push(`
+--- CONTEXTO GERAL ---
+${icaoDoc.content}
+--- FIM CONTEXTO GERAL ---
+        `);
     }
 
     return {
       contextText: relevantChunks.join('\n\n'),
-      sourceTitles: Array.from(sources)
+      sourceTitles: Array.from(sources),
+      retrievedItems
     };
   };
 
@@ -97,35 +111,59 @@ ${content || "Conteúdo não indexado."}
 
     try {
       // 1. RETRIEVE (RAG)
-      const { contextText, sourceTitles } = retrieveContext(input);
+      const { contextText, sourceTitles, retrievedItems } = retrieveContext(input);
 
-      // 2. AUGMENT PROMPT
+      // 2. CONSTRUCT MULTIMODAL PAYLOAD
+      const parts: any[] = [];
+
+      // Text Prompt Part
       const prompt = `
 PERGUNTA DO USUÁRIO: ${input}
 
-CONTEXTO RECUPERADO DOS DOCUMENTOS:
-${contextText || "Nenhum documento relevante encontrado para os termos pesquisados."}
+CONTEXTO RECUPERADO DOS DOCUMENTOS LOCAIS & DIRETIVAS:
+${contextText || "Nenhum documento local específico encontrado. Baseie-se nos padrões ICAO e utilize o Google Search se necessário."}
 
-Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo a passo antes de responder para garantir precisão técnica.
+Responda à pergunta do usuário. 
+- Prioridade 1: Documentos Locais (CV-CAR) e Anexos visuais se fornecidos.
+- Prioridade 2: Padrões ICAO (Anexos/Doc 4444).
+- Prioridade 3: Web Search (AAC/ASA/ICAO).
 `;
+      parts.push({ text: prompt });
+
+      // Media Parts (Images/PDFs)
+      retrievedItems.forEach(item => {
+        if (item.mediaData && item.mimeType) {
+           parts.push({
+             inlineData: {
+               mimeType: item.mimeType,
+               data: item.mediaData
+             }
+           });
+        }
+      });
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // 3. GENERATE WITH THINKING MODE
+      // 3. GENERATE WITH THINKING MODE & GOOGLE SEARCH
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
-        contents: prompt,
+        contents: { parts },
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
-          thinkingConfig: { thinkingBudget: 32768 }, // Max budget for deep reasoning
+          thinkingConfig: { thinkingBudget: 32768 }, // Deep reasoning
+          tools: [{ googleSearch: {} }] // Enable Web Search
         },
       });
 
+      // Check if grounding was used (web search)
+      const hasGrounding = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.length ? true : false;
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'model',
         text: response.text || "Desculpe, não consegui processar a sua resposta.",
-        sources: sourceTitles.length > 0 ? sourceTitles : undefined
+        sources: sourceTitles.length > 0 ? sourceTitles.filter(t => !t.includes("Padrões Internacionais")) : undefined,
+        grounding: hasGrounding
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -174,7 +212,7 @@ Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo
               <h3 className="font-bold text-sm">Assistente CV-CTA</h3>
               <p className="text-xs text-blue-100 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                Gemini 3 Pro (Thinking)
+                Online (Docs + ICAO + Web)
               </p>
             </div>
           </div>
@@ -197,13 +235,18 @@ Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo
                 </div>
                 
                 {/* Source Citations */}
-                {msg.role === 'model' && msg.sources && (
+                {msg.role === 'model' && (
                   <div className="mt-1 ml-1 max-w-[85%] flex flex-wrap gap-1">
-                    {msg.sources.map((source, idx) => (
+                    {msg.sources && msg.sources.map((source, idx) => (
                       <span key={idx} className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
-                        <FileText className="w-3 h-3" /> {source}
+                        {source.includes('Anexo') || source.includes('File') ? <Paperclip className="w-3 h-3"/> : <FileText className="w-3 h-3" />} {source}
                       </span>
                     ))}
+                    {msg.grounding && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                        <Globe className="w-3 h-3" /> Web
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -213,9 +256,9 @@ Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo
                 <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-cv-blue" />
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-700 font-medium">Analisando documentação...</span>
+                    <span className="text-xs text-gray-700 font-medium">Analisando Padrões...</span>
                     <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                       <BrainCircuit className="w-3 h-3" /> Thinking Mode Active
+                       <BrainCircuit className="w-3 h-3" /> Thinking Mode
                     </span>
                   </div>
                 </div>
@@ -232,7 +275,7 @@ Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Ex: Qual a separação mínima RVSM?"
+                placeholder="Ex: Qual a separação mínima no ACC?"
                 className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
                 disabled={isLoading}
               />
@@ -250,7 +293,7 @@ Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo
             </div>
             <div className="text-center mt-2">
               <p className="text-[10px] text-gray-400">
-                As respostas são geradas com base nos manuais disponíveis na Biblioteca.
+                IA pode cometer erros. Verifique fontes oficiais.
               </p>
             </div>
           </div>

@@ -1,8 +1,9 @@
 
-import { NewsItem, Notam, Document, OperationalStatus, FlightStat, Project, VoteProposal, Meeting, FinancialRecord, UserQuota, MemberHistoryLog, MemberProfile, UserRole, RegistrationRequest } from './types';
+import { NewsItem, Notam, Document, FlightStat, Project, VoteProposal, Meeting, FinancialRecord, UserQuota, MemberHistoryLog, MemberProfile, UserRole, RegistrationRequest, GlossaryTerm, ForumThread, MediaItem, KnowledgeItem } from './types';
 
 export const APP_NAME = "CV-CTA Portal";
 
+// ... (Keep previous exports unchanged until MOCK_NEWS) ...
 export const MOCK_NEWS: NewsItem[] = [
   {
     id: '1',
@@ -139,7 +140,8 @@ export const MOCK_DOCS: Document[] = [
     version: 'Edição 2',
     updatedAt: '2024-05-12',
     category: 'Legislação',
-    size: '2.4 MB'
+    size: '2.4 MB',
+    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' // Simulation URL 1
   },
   {
     id: 'CV-CAR-1',
@@ -147,7 +149,8 @@ export const MOCK_DOCS: Document[] = [
     version: 'Edição 4',
     updatedAt: '2025-01-15',
     category: 'Legislação',
-    size: '3.1 MB'
+    size: '3.1 MB',
+    url: 'https://pdfobject.com/pdf/sample.pdf' // Simulation URL 2
   },
   {
     id: 'MAN-TWR',
@@ -155,51 +158,110 @@ export const MOCK_DOCS: Document[] = [
     version: '3.4',
     updatedAt: '2025-09-01',
     category: 'Manual',
-    size: '4.2 MB'
+    size: '4.2 MB',
+    url: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf' // Simulation URL 3
   }
 ];
 
-// RAG Knowledge Base
-export const DOC_CONTENTS: Record<string, string> = {
-  'CV-CAR-11': `
-    CONTEÚDO DO DOCUMENTO: CV-CAR 11 - Serviços de Tráfego Aéreo
-    FONTE: Agência de Aviação Civil (AAC)
-    
-    CAPÍTULO 2: GERAL
-    2.1. A autoridade competente para a designação do espaço aéreo e dos aeródromos controlados é a AAC.
-    2.2. Os Serviços de Tráfego Aéreo (ATS) compreendem três serviços identificados como se segue:
-         a) Serviço de controlo de tráfego aéreo (Controlo de área, aproximação e aeródromo);
-         b) Serviço de informação de voo;
-         c) Serviço de alerta.
+// Initial Data for AI Knowledge Base
+export const INITIAL_KNOWLEDGE_BASE: KnowledgeItem[] = [
+  {
+    id: 'WEB-AAC',
+    title: 'Site Oficial da Agência de Aviação Civil (AAC)',
+    category: 'Outro',
+    lastUpdated: new Date().toISOString().split('T')[0],
+    content: `
+REFERÊNCIA PARA BUSCA WEB:
+Este item serve como ponte para o site oficial da AAC (www.aac.cv).
+A Agência de Aviação Civil regula toda a atividade aeronáutica em Cabo Verde.
+O assistente deve usar o Google Search ('site:aac.cv') para encontrar:
+- Regulamentos atualizados (CV-CARs).
+- Circulares de Informação Aeronáutica (AICs).
+- Legislação e Diretivas de Segurança Operacional.
+- Comunicados de imprensa e taxas aeronáuticas.
+    `
+  },
+  {
+    id: 'INTL-STD-ICAO',
+    title: 'Padrões Internacionais de Controlo de Tráfego Aéreo (ICAO)',
+    category: 'Regulamento',
+    lastUpdated: new Date().toISOString().split('T')[0],
+    content: `
+CONTEÚDO DE REFERÊNCIA: PADRÕES INTERNACIONAIS ICAO
+O assistente deve utilizar o seu conhecimento pré-treinado e busca web para responder com base nos seguintes documentos padrão da OACI (ICAO), sempre que a regulamentação local (CV-CAR) for omissa:
 
-    CAPÍTULO 3: SERVIÇO DE CONTROLO DE TRÁFEGO AÉREO
-    3.1. Separações Mínimas: A separação vertical mínima reduzida (RVSM) de 300 m (1 000 pés) aplica-se entre FL 290 e FL 410 na FIR Sal.
-    
-    CAPÍTULO 4: SERVIÇO DE INFORMAÇÃO DE VOO
-    4.1. O Serviço de Informação de Voo (FIS) deve ser prestado a todas as aeronaves que possam ser afetadas pela informação e que estejam a receber serviço de controlo de tráfego aéreo; ou conhecidas dos órgãos ATS.
-  `,
-  'CV-CAR-1': `
-    CONTEÚDO DO DOCUMENTO: CV-CAR 1 - Licenciamento de Pessoal Aeronáutico
-    FONTE: Agência de Aviação Civil (AAC)
-    
-    SUBPARTE D: LICENÇA DE CONTROLADOR DE TRÁFEGO AÉREO (ATCL)
-    1. Requisitos de Idade: O requerente deve ter pelo menos 21 anos de idade.
-    2. Requisitos Médicos: O requerente deve possuir um Certificado Médico Classe 3 válido.
-    3. Requisitos de Conhecimento: O requerente deve demonstrar conhecimentos em Legislação Aérea, Equipamento ATC, Geral, Navegação, Procedimentos Operacionais, etc.
-    4. Requisitos de Proficiência Linguística: Mínimo Nível Operacional 4 (OACI) em Inglês e Português.
-  `,
-  'MAN-TWR': `
-    CONTEÚDO DO DOCUMENTO: Manual de Operações Torre (TWR) - GVAC
-    
-    CAPÍTULO 3: VENTOS E LIMITES
-    3.1. Limite de Vento Cruzado (Crosswind): Para B737/A320 é 35kt em pista seca e 15kt em pista molhada.
-    3.2. Tailwind: Máximo de 10kt para aterragens e 15kt para descolagens.
-    
-    CAPÍTULO 5: FRASEOLOGIA LOCAL
-    PT: "Autorizado a aterrar pista 01, vento 360 graus 10 nós."
-    EN: "Cleared to land runway 01, wind 360 degrees 10 knots."
-  `
-};
+1. Anexo 2: Regras do Ar (Rules of the Air).
+2. Anexo 11: Serviços de Tráfego Aéreo (Air Traffic Services).
+3. Doc 4444: Gestão de Tráfego Aéreo (PANS-ATM).
+4. Doc 8168: Operações de Aeronaves (PANS-OPS).
+5. Anexo 10: Telecomunicações Aeronáuticas (Vols I-V).
+
+HIERARQUIA DE APLICAÇÃO:
+1. Legislação Nacional de Cabo Verde (CV-CAR).
+2. Procedimentos Regionais (AFI Region).
+3. Padrões Internacionais (ICAO Standards - SARPs).
+    `
+  },
+  {
+    id: 'CV-CAR-11',
+    title: 'CV-CAR 11 - Serviços de Tráfego Aéreo',
+    category: 'Regulamento',
+    lastUpdated: '2024-05-12',
+    content: `
+CONTEÚDO DO DOCUMENTO: CV-CAR 11 - Serviços de Tráfego Aéreo
+FONTE: Agência de Aviação Civil (AAC)
+
+CAPÍTULO 2: GERAL
+2.1. A autoridade competente para a designação do espaço aéreo e dos aeródromos controlados é a AAC.
+2.2. Os Serviços de Tráfego Aéreo (ATS) compreendem três serviços identificados como se segue:
+      a) Serviço de controlo de tráfego aéreo (Controlo de área, aproximação e aeródromo);
+      b) Serviço de informação de voo;
+      c) Serviço de alerta.
+
+CAPÍTULO 3: SERVIÇO DE CONTROLO DE TRÁFEGO AÉREO
+3.1. Separações Mínimas: A separação vertical mínima reduzida (RVSM) de 300 m (1 000 pés) aplica-se entre FL 290 e FL 410 na FIR Sal.
+
+CAPÍTULO 4: SERVIÇO DE INFORMAÇÃO DE VOO
+4.1. O Serviço de Informação de Voo (FIS) deve ser prestado a todas as aeronaves que possam ser afetadas pela informação e que estejam a receber serviço de controlo de tráfego aéreo; ou conhecidas dos órgãos ATS.
+    `
+  },
+  {
+    id: 'CV-CAR-1',
+    title: 'CV-CAR 1 - Licenciamento de Pessoal Aeronáutico',
+    category: 'Regulamento',
+    lastUpdated: '2025-01-15',
+    content: `
+CONTEÚDO DO DOCUMENTO: CV-CAR 1 - Licenciamento de Pessoal Aeronáutico
+FONTE: Agência de Aviação Civil (AAC)
+
+SUBPARTE D: LICENÇA DE CONTROLADOR DE TRÁFEGO AÉREO (ATCL)
+1. Requisitos de Idade: O requerente deve ter pelo menos 21 anos de idade.
+2. Requisitos Médicos: O requerente deve possuir um Certificado Médico Classe 3 válido.
+3. Requisitos de Conhecimento: O requerente deve demonstrar conhecimentos em Legislação Aérea, Equipamento ATC, Geral, Navegação, Procedimentos Operacionais, etc.
+4. Requisitos de Proficiência Linguística: Mínimo Nível Operacional 4 (OACI) em Inglês e Português.
+    `
+  },
+  {
+    id: 'MAN-TWR',
+    title: 'Manual de Operações TWR (Sal)',
+    category: 'Manual',
+    lastUpdated: '2025-09-01',
+    content: `
+CONTEÚDO DO DOCUMENTO: Manual de Operações Torre (TWR) - GVAC
+
+CAPÍTULO 3: VENTOS E LIMITES
+3.1. Limite de Vento Cruzado (Crosswind): Para B737/A320 é 35kt em pista seca e 15kt em pista molhada.
+3.2. Tailwind: Máximo de 10kt para aterragens e 15kt para descolagens.
+
+CAPÍTULO 5: FRASEOLOGIA LOCAL
+PT: "Autorizado a aterrar pista 01, vento 360 graus 10 nós."
+EN: "Cleared to land runway 01, wind 360 degrees 10 knots."
+    `
+  }
+];
+
+// Deprecated but kept for compatibility if needed, but components should use INITIAL_KNOWLEDGE_BASE
+export const DOC_CONTENTS: Record<string, string> = {};
 
 export const TRAFFIC_DATA: FlightStat[] = [
   { time: '00:00', arrivals: 2, departures: 1 },
@@ -212,7 +274,7 @@ export const TRAFFIC_DATA: FlightStat[] = [
 
 export const AIRPORTS = ['GVAC (Sal)', 'GVNP (Praia)', 'GVSV (São Vicente)', 'GVBA (Boa Vista)'];
 
-// ASSOCIATION MOCK DATA
+// ... (Keep remaining constants unchanged: ASSOCIATION_PROJECTS, VOTING_PROPOSALS, MEETINGS, FINANCIAL_RECORDS, USER_QUOTAS, MOCK_MEMBER_HISTORY, MOCK_MEMBER_PROFILE, MOCK_REGISTRATION_REQUESTS, MOCK_GLOSSARY, MOCK_FORUM_THREADS, MOCK_MEDIA) ...
 export const ASSOCIATION_PROJECTS: Project[] = [
   {
     id: 'PROJ-01',
@@ -352,4 +414,27 @@ export const MOCK_REGISTRATION_REQUESTS: RegistrationRequest[] = [
     date: '2025-10-13',
     status: 'Pending'
   }
+];
+
+export const MOCK_GLOSSARY: GlossaryTerm[] = [
+  { term: 'ACC', definition: 'Centro de Controlo de Área. Órgão responsável por controlar aeronaves em rota e altitudes elevadas.', category: 'Operacional' },
+  { term: 'ATFM', definition: 'Gestão de Fluxo de Tráfego Aéreo. Regulação do tráfego para evitar sobrecarga dos sectores e atrasos.', category: 'Operacional' },
+  { term: 'CPDLC', definition: 'Comunicação Piloto-Controlador por Ligação de Dados. "SMS" da aviação para comunicação oceânica.', category: 'Técnico' },
+  { term: 'FIR', definition: 'Região de Informação de Voo. Espaço aéreo de dimensões definidas onde se prestam serviços de informação de voo e alerta.', category: 'Geral' },
+  { term: 'Go-Around', definition: 'Borrego ou Arremetida. Procedimento em que o piloto aborta a aterragem por razões de segurança.', category: 'Operacional' },
+  { term: 'NOTAM', definition: 'Notice to Air Missions. Aviso contendo informação relativa a estabelecimento, condição ou alteração de qualquer instalação aeronáutica.', category: 'Técnico' },
+  { term: 'Slot', definition: 'Janela de tempo atribuída a uma aeronave para descolar ou aterrar, visando a gestão de fluxo.', category: 'Operacional' },
+  { term: 'TMA', definition: 'Área de Controlo Terminal. Espaço aéreo controlado, geralmente situado na confluência de rotas ATS nas imediações de um ou mais aeródromos principais.', category: 'Operacional' },
+];
+
+export const MOCK_FORUM_THREADS: ForumThread[] = [
+  { id: '1', title: 'Feedback sobre o novo sistema VCS na Torre do Sal', author: 'Carlos Delgado', date: '2025-10-14', replies: 12, tags: ['Técnico', 'Equipamento'], lastActivity: '2 horas atrás' },
+  { id: '2', title: 'Dúvida sobre aplicação da Circular 14/25 (Procedimentos de Visibilidade Reduzida)', author: 'Ana Silva', date: '2025-10-13', replies: 5, tags: ['Operacional', 'Regulamentação'], lastActivity: '1 dia atrás' },
+  { id: '3', title: 'Sugestões para o próximo Acordo de Empresa', author: 'João Mendes', date: '2025-10-10', replies: 34, tags: ['Sindical', 'Carreira'], lastActivity: '3 dias atrás' },
+];
+
+export const MOCK_MEDIA: MediaItem[] = [
+  { id: '1', type: 'image', url: 'https://images.unsplash.com/photo-1583070386038-5293b9476963?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', title: 'Posição Radar ACC', description: 'Controlador a gerir o tráfego oceânico durante o pico da noite.' },
+  { id: '2', type: 'image', url: 'https://images.unsplash.com/photo-1542296332-2e44a99cfef9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', title: 'Torre de Controlo (TWR)', description: 'Vista panorâmica da placa a partir da Torre do Sal.' },
+  { id: '3', type: 'image', url: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', title: 'Briefing Matinal', description: 'Equipa a coordenar as operações antes do início do turno.' },
 ];

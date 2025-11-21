@@ -15,12 +15,15 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import PublicResources from './pages/PublicResources';
 import AdminPanel from './pages/AdminPanel';
+import Gallery from './pages/Gallery';
 import Chatbot from './components/Chatbot';
 import ScrollToTop from './components/ScrollToTop';
-import { OperationalStatus, UserRole } from './types';
+import BackToTopButton from './components/BackToTopButton';
+import { OperationalStatus, UserRole, KnowledgeItem } from './types';
+import { INITIAL_KNOWLEDGE_BASE } from './constants';
 
 // Layout Wrapper for standard pages (Header + Nav + Content + Footer)
-const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: () => void}> = ({ isLoggedIn, userRole, onLogout }) => {
+const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: () => void, knowledgeBase: KnowledgeItem[]}> = ({ isLoggedIn, userRole, onLogout, knowledgeBase }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900 relative">
       <OperationalHeader 
@@ -35,7 +38,8 @@ const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: 
       <main className="flex-grow">
          <Outlet />
       </main>
-      <Chatbot />
+      <Chatbot knowledgeBase={knowledgeBase} />
+      <BackToTopButton />
       <Footer />
     </div>
   );
@@ -44,6 +48,9 @@ const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>(UserRole.PUBLIC);
+  
+  // Centralized State for AI Knowledge Base
+  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeItem[]>(INITIAL_KNOWLEDGE_BASE);
 
   const handleLogin = (role: UserRole) => {
     setIsLoggedIn(true);
@@ -81,7 +88,7 @@ const App: React.FC = () => {
                  <main className="flex-grow">
                     <Dashboard userRole={userRole} />
                  </main>
-                 <Chatbot />
+                 <Chatbot knowledgeBase={knowledgeBase} />
               </div>
             ) : (
               <Navigate to="/login" replace />
@@ -99,7 +106,7 @@ const App: React.FC = () => {
                  <main className="flex-grow">
                     <Association userRole={userRole} />
                  </main>
-                 <Chatbot />
+                 <Chatbot knowledgeBase={knowledgeBase} />
               </div>
             ) : (
               <Navigate to="/login" replace />
@@ -115,9 +122,9 @@ const App: React.FC = () => {
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
                  <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
                  <main className="flex-grow">
-                    <AdminPanel />
+                    <AdminPanel knowledgeBase={knowledgeBase} onUpdateKnowledgeBase={setKnowledgeBase} />
                  </main>
-                 <Chatbot />
+                 <Chatbot knowledgeBase={knowledgeBase} />
               </div>
             ) : (
               <Navigate to="/dashboard" replace />
@@ -126,7 +133,7 @@ const App: React.FC = () => {
         />
 
         {/* Public Routes (Wrapped in MainLayout) */}
-        <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} />}>
+        <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} knowledgeBase={knowledgeBase} />}>
           <Route path="/" element={<Home />} />
           <Route path="/resources" element={<PublicResources />} />
           <Route path="/notams" element={<NotamsPage />} />
@@ -134,6 +141,7 @@ const App: React.FC = () => {
           <Route path="/news" element={<News />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/gallery" element={<Gallery />} />
         </Route>
 
         {/* Catch all - Redirect to Home */}

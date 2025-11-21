@@ -3,18 +3,16 @@ import React, { useState } from 'react';
 import { MOCK_DOCS } from '../constants';
 import { FileText, Download, Eye, X, ExternalLink, Printer } from 'lucide-react';
 import { Document } from '../types';
+import Breadcrumbs from '../components/Breadcrumbs';
 
 const DocumentsPage: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
-
-  // In a real app, this would be the actual URL from the API/Database
-  // We use a sample PDF for demonstration purposes
-  const DEMO_PDF_URL = "https://pdfobject.com/pdf/sample.pdf";
 
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
       <div className="bg-white border-b border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4">
+          <Breadcrumbs />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Biblioteca de Documentos</h1>
           <p className="text-gray-600">Manuais, procedimentos operacionais e legislação.</p>
         </div>
@@ -82,7 +80,7 @@ const DocumentsPage: React.FC = () => {
                    <Printer className="w-4 h-4" /> Imprimir
                 </button>
                 <a 
-                   href={DEMO_PDF_URL} 
+                   href={selectedDoc.url || "https://pdfobject.com/pdf/sample.pdf"} 
                    target="_blank" 
                    rel="noreferrer"
                    className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded hover:bg-gray-200 text-sm font-medium transition"
@@ -104,11 +102,11 @@ const DocumentsPage: React.FC = () => {
             <div className="flex-1 bg-gray-200 relative flex flex-col items-center justify-center">
                {/* Simulation Notice */}
                <div className="absolute top-4 z-10 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm border border-yellow-200">
-                 Modo de Pré-visualização (Simulação)
+                 Modo de Pré-visualização (Documento: {selectedDoc.id})
                </div>
                
                <iframe 
-                 src={`${DEMO_PDF_URL}#toolbar=0`}
+                 src={`${selectedDoc.url || 'https://pdfobject.com/pdf/sample.pdf'}#toolbar=0`}
                  className="w-full h-full shadow-inner"
                  title="PDF Viewer"
                />
@@ -121,4 +119,3 @@ const DocumentsPage: React.FC = () => {
 };
 
 export default DocumentsPage;
-    

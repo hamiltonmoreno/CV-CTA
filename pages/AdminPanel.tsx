@@ -1,15 +1,16 @@
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   ShieldCheck, Users, FileText, Settings, Check, X, 
   Search, AlertTriangle, Bell, Plus, Trash2, Edit, 
-  Save, DollarSign, TrendingUp, TrendingDown, Calendar, Image as ImageIcon
+  Save, DollarSign, TrendingUp, TrendingDown, BrainCircuit, Database, Upload, File, Loader2
 } from 'lucide-react';
 import { 
   MOCK_REGISTRATION_REQUESTS, MOCK_NEWS, MOCK_NOTAMS, 
-  FINANCIAL_RECORDS, AIRPORTS, MOCK_MEMBER_PROFILE 
+  FINANCIAL_RECORDS, AIRPORTS 
 } from '../constants';
-import { RegistrationRequest, NewsItem, Notam, FinancialRecord, UserRole, Member } from '../types';
+import { RegistrationRequest, NewsItem, Notam, FinancialRecord, UserRole, Member, KnowledgeItem } from '../types';
 import Breadcrumbs from '../components/Breadcrumbs';
 
 // Mock Initial Active Members (simulating database)
@@ -19,8 +20,20 @@ const INITIAL_MEMBERS: Member[] = [
   { id: '3', name: 'João Mendes', license: 'CV-CTA-012', role: UserRole.ADMIN, status: 'Active', quotaStatus: 'Up-to-date' },
 ];
 
-const AdminPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'members' | 'content' | 'finance' | 'settings'>('members');
+interface Props {
+  knowledgeBase?: KnowledgeItem[];
+  onUpdateKnowledgeBase?: (kb: KnowledgeItem[]) => void;
+}
+
+type TabType = 'members' | 'content' | 'finance' | 'ai' | 'settings';
+
+const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as TabType) || 'members';
+
+  const setActiveTab = (tab: TabType) => {
+    setSearchParams({ tab });
+  };
   
   // Local State for Data Management
   const [requests, setRequests] = useState<RegistrationRequest[]>(MOCK_REGISTRATION_REQUESTS);
@@ -33,7 +46,35 @@ const AdminPanel: React.FC = () => {
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
   const [isNotamModalOpen, setIsNotamModalOpen] = useState(false);
   const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
+  const [isKnowledgeModalOpen, setIsKnowledgeModalOpen] = useState(false);
+  const [editingKnowledgeItem, setEditingKnowledgeItem] = useState<KnowledgeItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // File Upload State
+  const [selectedFile, setSelectedFile] = useState<{name: string, data: string, type: string} | null>(null);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [extractedContent, setExtractedContent] = useState('');
+
+  // --- PDF EXTRACTION LOGIC ---
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      // @ts-ignore - pdfjsLib is loaded via CDN in index.html
+      const pdf = await window.pdfjsLib.getDocument(arrayBuffer).promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += `--- PÁGINA ${i} ---\n${pageText}\n\n`;
+      }
+      return fullText;
+    } catch (error) {
+      console.error("Erro ao extrair PDF:", error);
+      return "Erro ao extrair texto do PDF. Por favor, adicione uma descrição manual.";
+    }
+  };
 
   // --- MEMBER MANAGEMENT ---
   const handleApprove = (req: RegistrationRequest) => {
@@ -135,6 +176,107 @@ const AdminPanel: React.FC = () => {
     setIsFinanceModalOpen(false);
   };
 
+  // --- AI KNOWLEDGE BASE MANAGEMENT ---
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // 1. Prepare Base64 for AI Attachment
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const result = event.target.result as string;
+          const base64Data = result.split(',')[1];
+          
+          setSelectedFile({
+            name: file.name,
+            type: file.type,
+            data: base64Data
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // 2. Extract Text content for RAG search (Simulate or use PDF.js)
+      if (file.type === 'application/pdf') {
+        setIsExtractingText(true);
+        const text = await extractTextFromPDF(file);
+        setExtractedContent(text);
+        setIsExtractingText(false);
+      } else {
+        // For images, we can't extract text easily client-side without OCR API
+        setExtractedContent('[Imagem anexada: Forneça uma descrição manual do conteúdo desta imagem para ajudar na busca.]');
+      }
+    }
+  };
+
+  const handleSaveKnowledge = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!onUpdateKnowledgeBase) return;
+
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get('title') as string;
+    const category = formData.get('category') as any;
+    const content = formData.get('content') as string;
+
+    const baseItem = {
+        title, 
+        category, 
+        content, 
+        lastUpdated: new Date().toISOString().split('T')[0]
+    };
+
+    if (editingKnowledgeItem) {
+      // Update existing
+      const updatedList = knowledgeBase.map(item => 
+        item.id === editingKnowledgeItem.id 
+          ? { 
+              ...item, 
+              ...baseItem,
+              mediaData: selectedFile ? selectedFile.data : item.mediaData,
+              mimeType: selectedFile ? selectedFile.type : item.mimeType,
+              fileName: selectedFile ? selectedFile.name : item.fileName
+            }
+          : item
+      );
+      onUpdateKnowledgeBase(updatedList);
+    } else {
+      // Create new
+      const newItem: KnowledgeItem = {
+        id: `KB-${Date.now()}`,
+        ...baseItem,
+        mediaData: selectedFile?.data,
+        mimeType: selectedFile?.type,
+        fileName: selectedFile?.name
+      };
+      onUpdateKnowledgeBase([...knowledgeBase, newItem]);
+    }
+    setIsKnowledgeModalOpen(false);
+    setEditingKnowledgeItem(null);
+    setSelectedFile(null);
+    setExtractedContent('');
+  };
+
+  const handleDeleteKnowledge = (id: string) => {
+    if (onUpdateKnowledgeBase && window.confirm('Apagar este documento da base de conhecimento?')) {
+      onUpdateKnowledgeBase(knowledgeBase.filter(k => k.id !== id));
+    }
+  };
+
+  const openEditKnowledge = (item: KnowledgeItem) => {
+    setEditingKnowledgeItem(item);
+    setSelectedFile(null);
+    setExtractedContent(item.content);
+    setIsKnowledgeModalOpen(true);
+  };
+
+  const openNewKnowledge = () => {
+    setEditingKnowledgeItem(null);
+    setSelectedFile(null);
+    setExtractedContent('');
+    setIsKnowledgeModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Header */}
@@ -160,6 +302,7 @@ const AdminPanel: React.FC = () => {
             { id: 'members', icon: Users, label: 'Membros & Registos' },
             { id: 'content', icon: FileText, label: 'Gestão de Conteúdo' },
             { id: 'finance', icon: DollarSign, label: 'Gestão Financeira' },
+            { id: 'ai', icon: BrainCircuit, label: 'Inteligência Artificial' },
             { id: 'settings', icon: Settings, label: 'Sistema' },
           ].map((tab) => (
             <button
@@ -415,6 +558,55 @@ const AdminPanel: React.FC = () => {
            </div>
         )}
 
+        {/* --- TAB: AI TRAINING (NEW) --- */}
+        {activeTab === 'ai' && (
+           <div className="space-y-8 animate-in fade-in">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                 <div className="flex justify-between items-center mb-6">
+                    <div>
+                       <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                          <BrainCircuit className="w-5 h-5 text-purple-600" /> Base de Conhecimento (RAG)
+                       </h3>
+                       <p className="text-sm text-gray-500">Gerir os documentos e textos que alimentam o assistente virtual.</p>
+                    </div>
+                    <button 
+                      onClick={openNewKnowledge}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-purple-700 shadow-sm"
+                    >
+                       <Plus className="w-4 h-4" /> Novo Documento
+                    </button>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {knowledgeBase.map((item) => (
+                       <div key={item.id} className="border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition shadow-sm group">
+                          <div className="flex justify-between items-start mb-2">
+                             <h4 className="font-bold text-gray-900 truncate pr-2">{item.title}</h4>
+                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => openEditKnowledge(item)} className="text-blue-500 hover:bg-blue-50 p-1 rounded"><Edit className="w-4 h-4" /></button>
+                                <button onClick={() => handleDeleteKnowledge(item.id)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-2 mb-3 flex-wrap">
+                             <span className="text-[10px] uppercase bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold">{item.category}</span>
+                             <span className="text-xs text-gray-400">{item.lastUpdated}</span>
+                             {item.mediaData && (
+                                <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold border border-blue-100 flex items-center gap-1">
+                                   <File className="w-3 h-3" /> Anexo
+                                </span>
+                             )}
+                          </div>
+                          <div className="bg-gray-50 p-3 rounded-lg text-xs text-gray-600 font-mono h-24 overflow-hidden relative">
+                             {item.content || (item.mediaData ? '[Conteúdo do Arquivo Anexado]' : '[Sem conteúdo]')}
+                             <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-gray-50 to-transparent"></div>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+        )}
+
         {/* --- TAB: SETTINGS --- */}
         {activeTab === 'settings' && (
            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 animate-in fade-in">
@@ -562,6 +754,99 @@ const AdminPanel: React.FC = () => {
                  <div className="pt-4 flex gap-3">
                     <button type="button" onClick={() => setIsFinanceModalOpen(false)} className="flex-1 py-2 border rounded hover:bg-gray-50">Cancelar</button>
                     <button type="submit" className="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700">Salvar</button>
+                 </div>
+              </form>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL: KNOWLEDGE BASE ITEM */}
+      {isKnowledgeModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
+           <div className="bg-white w-full max-w-2xl rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6 border-b pb-4">
+                 <h3 className="text-lg font-bold text-gray-900">
+                    {editingKnowledgeItem ? 'Editar Documento IA' : 'Adicionar Conhecimento IA'}
+                 </h3>
+                 <button onClick={() => setIsKnowledgeModalOpen(false)}><X className="w-5 h-5 text-gray-500" /></button>
+              </div>
+              <form onSubmit={handleSaveKnowledge} className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">Título do Documento</label>
+                       <input 
+                         required 
+                         name="title" 
+                         type="text" 
+                         defaultValue={editingKnowledgeItem?.title}
+                         className="w-full p-2 border rounded focus:ring-2 focus:ring-cv-blue outline-none" 
+                         placeholder="Ex: Manual de Torre"
+                       />
+                    </div>
+                    <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                       <select 
+                         name="category" 
+                         className="w-full p-2 border rounded bg-white"
+                         defaultValue={editingKnowledgeItem?.category || 'Manual'}
+                       >
+                          <option value="Manual">Manual</option>
+                          <option value="Regulamento">Regulamento</option>
+                          <option value="Procedimento">Procedimento</option>
+                          <option value="Outro">Outro</option>
+                       </select>
+                    </div>
+                 </div>
+                 
+                 {/* File Upload Field */}
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Anexar Arquivo (PDF ou Imagem)</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors relative">
+                       <input 
+                         type="file" 
+                         accept=".pdf, image/*" 
+                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                         onChange={handleFileChange}
+                       />
+                       <div className="flex flex-col items-center gap-1 text-gray-500">
+                          {selectedFile || editingKnowledgeItem?.mediaData ? (
+                             <div className="text-cv-blue font-medium flex items-center gap-2">
+                                <Check className="w-4 h-4" /> 
+                                {selectedFile ? selectedFile.name : 'Arquivo Existente'}
+                             </div>
+                          ) : (
+                             <>
+                                <Upload className="w-6 h-6 mb-1" />
+                                <span className="text-xs">Clique para selecionar PDF ou Imagem</span>
+                             </>
+                          )}
+                          {isExtractingText && (
+                             <div className="flex items-center gap-2 text-blue-600 text-xs font-bold mt-1">
+                                <Loader2 className="w-3 h-3 animate-spin" /> Extraindo texto do PDF...
+                             </div>
+                          )}
+                       </div>
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo do Texto / Descrição</label>
+                    <p className="text-xs text-gray-500 mb-2">Este conteúdo é usado para a busca do assistente. Se anexar um PDF, o texto será extraído automaticamente abaixo.</p>
+                    <textarea 
+                      required 
+                      name="content" 
+                      rows={8} 
+                      value={extractedContent || editingKnowledgeItem?.content}
+                      onChange={(e) => setExtractedContent(e.target.value)}
+                      className="w-full p-3 border rounded focus:ring-2 focus:ring-cv-blue outline-none font-mono text-sm" 
+                      placeholder="Cole o conteúdo ou aguarde a extração automática..."
+                    ></textarea>
+                 </div>
+                 <div className="pt-4 flex gap-3">
+                    <button type="button" onClick={() => setIsKnowledgeModalOpen(false)} className="flex-1 py-2 border rounded hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                       {editingKnowledgeItem ? 'Atualizar' : 'Adicionar à Base'}
+                    </button>
                  </div>
               </form>
            </div>

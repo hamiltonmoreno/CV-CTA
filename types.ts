@@ -39,6 +39,7 @@ export interface Document {
   updatedAt: string;
   category: 'Manual' | 'Procedimento' | 'Legislação';
   size: string;
+  url?: string;
 }
 
 export interface FlightStat {
@@ -128,6 +129,8 @@ export interface VoteProposal {
     count: number;
   }[];
   userVoted?: boolean; // Track if current user voted
+  votedDate?: string;
+  votedOption?: string;
 }
 
 export interface Meeting {
@@ -155,4 +158,42 @@ export interface UserQuota {
   amount: number;
   status: 'Paid' | 'Pending'; // 'Pending' now means "Scheduled for deduction"
   paidDate?: string;
+}
+
+// New Improvements Types
+export interface GlossaryTerm {
+  term: string;
+  definition: string;
+  category: 'Operacional' | 'Técnico' | 'Geral';
+}
+
+export interface ForumThread {
+  id: string;
+  title: string;
+  author: string;
+  date: string;
+  replies: number;
+  tags: string[];
+  lastActivity: string;
+}
+
+export interface MediaItem {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  title: string;
+  description: string;
+}
+
+// AI Knowledge Base Type
+export interface KnowledgeItem {
+  id: string;
+  title: string;
+  category: 'Manual' | 'Regulamento' | 'Procedimento' | 'Outro';
+  content: string;
+  lastUpdated: string;
+  // New fields for file support
+  mediaData?: string; // Base64 string of the file
+  mimeType?: string; // e.g., 'application/pdf', 'image/jpeg'
+  fileName?: string;
 }

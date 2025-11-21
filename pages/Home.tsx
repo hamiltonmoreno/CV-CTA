@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MOCK_NEWS } from '../constants';
-import { ArrowRight, ShieldCheck, Globe2, Users, Lock, MapPin, History, BarChart3, Target, Award, PlayCircle, Plane } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Globe2, Users, Lock, MapPin, History, BarChart3, Target, Award, PlayCircle, Plane, Coins, Briefcase, TrendingUp } from 'lucide-react';
 
 const Home: React.FC = () => {
   
@@ -41,10 +42,10 @@ const Home: React.FC = () => {
             
             <div className="flex flex-wrap gap-4 pt-4">
               <button 
-                onClick={() => scrollToSection('quem-somos')}
+                onClick={() => scrollToSection('economia')}
                 className="bg-cv-blue text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/50 flex items-center gap-2 group"
               >
-                Conheça a Nossa Missão <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                Nosso Impacto Económico <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
               <button 
                 onClick={() => document.getElementById('association-area')?.scrollIntoView({behavior: 'smooth'})} 
@@ -79,8 +80,104 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* ECONOMIC IMPACT SECTION (NEW) */}
+      <section id="economia" className="py-24 bg-white scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            
+            {/* Left Column: Narrative */}
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-3">Impacto Económico</h2>
+                <h3 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  O Motor Invisível do <br/><span className="text-cv-blue">PIB de Cabo Verde</span>
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Os Controladores de Tráfego Aéreo (CTA) não garantem apenas a segurança; eles são os guardiões da maior porta de entrada da economia nacional. Num país arquipelágico onde o Turismo representa cerca de <span className="font-bold text-gray-900">25% do PIB</span>, a eficiência do nosso espaço aéreo é crítica.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="p-5 bg-blue-50 rounded-xl border border-blue-100 hover:shadow-md transition-shadow">
+                    <Coins className="w-8 h-8 text-blue-600 mb-3" />
+                    <h4 className="font-bold text-gray-900 mb-2">Receitas Diretas para o País</h4>
+                    <p className="text-sm text-gray-600">
+                      A FIR do Sal é um ativo de soberania que gera divisas. As taxas cobradas aos voos internacionais são injetadas diretamente na economia nacional, financiando infraestruturas em todo o arquipélago.
+                    </p>
+                 </div>
+                 <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100 hover:shadow-md transition-shadow">
+                    <Briefcase className="w-8 h-8 text-emerald-600 mb-3" />
+                    <h4 className="font-bold text-gray-900 mb-2">Viabilização do Turismo</h4>
+                    <p className="text-sm text-gray-600">
+                      Sem controlo de tráfego seguro e eficiente, não há voos charter, não há hotéis cheios e não há investimento externo. Somos o primeiro elo da cadeia de valor.
+                    </p>
+                 </div>
+              </div>
+            </div>
+
+            {/* Right Column: Visual Stats */}
+            <div className="relative">
+               <div className="absolute -top-10 -right-10 w-64 h-64 bg-gray-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+               <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+               
+               <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                  <div className="bg-cv-blue p-6 text-white text-center">
+                     <h4 className="text-xl font-bold">Contribuição Estratégica</h4>
+                     <p className="text-blue-200 text-sm">Dados aproximados do setor</p>
+                  </div>
+                  <div className="p-8 space-y-8">
+                     
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <div className="p-3 bg-gray-100 rounded-full text-gray-600">
+                              <Plane className="w-6 h-6" />
+                           </div>
+                           <div>
+                              <p className="font-bold text-gray-900">Chegadas Turísticas</p>
+                              <p className="text-xs text-gray-500">Via Aérea</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-2xl font-bold text-cv-blue">99%</p>
+                        </div>
+                     </div>
+
+                     <div className="w-full bg-gray-100 h-px"></div>
+
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <div className="p-3 bg-gray-100 rounded-full text-gray-600">
+                              <TrendingUp className="w-6 h-6" />
+                           </div>
+                           <div>
+                              <p className="font-bold text-gray-900">Receitas do Espaço Aéreo</p>
+                              <p className="text-xs text-gray-500">Injeção Direta na Economia</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-2xl font-bold text-emerald-600">+30M€</p>
+                           <p className="text-[10px] text-gray-400">Estimativa Anual</p>
+                        </div>
+                     </div>
+
+                     <div className="w-full bg-gray-100 h-px"></div>
+
+                     <div className="bg-gray-50 p-4 rounded-lg text-center">
+                        <p className="text-gray-600 italic text-sm">
+                           "Cada aterragem segura é um investimento direto na economia de Cabo Verde."
+                        </p>
+                     </div>
+
+                  </div>
+               </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* Institutional Values Section */}
-      <section id="quem-somos" className="py-20 bg-white scroll-mt-20">
+      <section id="quem-somos" className="py-20 bg-gray-50 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-sm font-bold text-cv-blue uppercase tracking-widest mb-3">Quem Somos</h2>
@@ -91,7 +188,7 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+            <div className="bg-white p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                  <Target className="w-32 h-32 text-cv-blue" />
               </div>
@@ -104,7 +201,7 @@ const Home: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-gray-50 p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+            <div className="bg-white p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                  <Globe2 className="w-32 h-32 text-emerald-600" />
               </div>
@@ -117,7 +214,7 @@ const Home: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-gray-50 p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+            <div className="bg-white p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                  <Award className="w-32 h-32 text-amber-600" />
               </div>
@@ -134,13 +231,13 @@ const Home: React.FC = () => {
       </section>
 
       {/* Real-time Map Simulation Section */}
-      <section className="py-20 bg-gray-100 relative overflow-hidden">
+      <section className="py-20 bg-gray-900 relative overflow-hidden">
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center gap-12">
                <div className="lg:w-1/2">
-                  <h2 className="text-sm font-bold text-cv-blue uppercase tracking-widest mb-3">Ao Vivo</h2>
-                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Tráfego em Tempo Real</h3>
-                  <p className="text-gray-600 mb-6 text-lg">
+                  <h2 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-3">Ao Vivo</h2>
+                  <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">Tráfego em Tempo Real</h3>
+                  <p className="text-gray-300 mb-6 text-lg">
                      Observe o fluxo contínuo de aeronaves que cruzam a FIR do Sal neste momento. Mais de 150 voos são geridos diariamente pelos nossos controladores.
                   </p>
                   <div className="flex items-center gap-3 mb-8">
@@ -148,7 +245,7 @@ const Home: React.FC = () => {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                      </span>
-                     <span className="text-sm font-medium text-gray-700">Sinal Radar Ativo</span>
+                     <span className="text-sm font-medium text-gray-300">Sinal Radar Ativo</span>
                   </div>
                   <Link to="/gallery" className="inline-flex items-center gap-2 bg-white text-gray-900 border border-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm group">
                      <PlayCircle className="w-5 h-5 text-cv-blue" />
@@ -157,7 +254,7 @@ const Home: React.FC = () => {
                </div>
                
                {/* Map Container */}
-               <div className="lg:w-1/2 w-full h-[400px] bg-blue-900 rounded-2xl shadow-2xl overflow-hidden relative border border-gray-300 group">
+               <div className="lg:w-1/2 w-full h-[400px] bg-blue-900 rounded-2xl shadow-2xl overflow-hidden relative border border-gray-700 group">
                   {/* Static Map Simulation */}
                   <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-30 grayscale group-hover:grayscale-0 transition-all duration-700"></div>
                   
@@ -196,40 +293,40 @@ const Home: React.FC = () => {
       </section>
 
       {/* The "Sal Oceanic FIR" Feature Section */}
-      <section id="contexto" className="py-20 bg-gray-900 text-white overflow-hidden relative scroll-mt-20">
-         <div className="absolute top-0 left-0 w-full h-full">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-overlay filter blur-[100px] opacity-20 animate-pulse"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-600 rounded-full mix-blend-overlay filter blur-[100px] opacity-20"></div>
+      <section id="contexto" className="py-20 bg-white text-gray-900 overflow-hidden relative scroll-mt-20">
+         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-[100px] opacity-50"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-100 rounded-full mix-blend-multiply filter blur-[100px] opacity-50"></div>
          </div>
          
          <div className="max-w-7xl mx-auto px-4 relative z-10 flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2">
-               <h2 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">Contexto Geoestratégico</h2>
+               <h2 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4">Contexto Geoestratégico</h2>
                <h3 className="text-4xl font-bold mb-6">A Encruzilhada do Atlântico</h3>
-               <p className="text-gray-300 text-lg leading-relaxed mb-6">
+               <p className="text-gray-600 text-lg leading-relaxed mb-6">
                   A Região de Informação de Voo (FIR) do Sal é um vasto polígono no oceano que conecta a Europa à América do Sul e a África Ocidental à América do Norte.
                </p>
-               <p className="text-gray-400 mb-8">
+               <p className="text-gray-600 mb-8">
                   A partir do Centro de Controlo Oceânico (ACC) na Ilha do Sal, os nossos controladores utilizam tecnologias ADS-B e comunicações por satélite (CPDLC) para monitorizar aeronaves a milhares de quilómetros de distância, onde o radar convencional não alcança.
                </p>
                
                <div className="grid grid-cols-2 gap-6">
                   <div className="border-l-2 border-blue-500 pl-4">
-                     <span className="block text-2xl font-bold text-white">Classe A</span>
-                     <span className="text-sm text-gray-400">Espaço Aéreo Superior</span>
+                     <span className="block text-2xl font-bold text-gray-900">Classe A</span>
+                     <span className="text-sm text-gray-500">Espaço Aéreo Superior</span>
                   </div>
                   <div className="border-l-2 border-emerald-500 pl-4">
-                     <span className="block text-2xl font-bold text-white">RVSM</span>
-                     <span className="text-sm text-gray-400">Separação Vertical Reduzida</span>
+                     <span className="block text-2xl font-bold text-gray-900">RVSM</span>
+                     <span className="text-sm text-gray-500">Separação Vertical Reduzida</span>
                   </div>
                </div>
             </div>
             <div className="lg:w-1/2">
-               <div className="relative rounded-2xl overflow-hidden border border-gray-700 shadow-2xl bg-gray-800">
+               <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-2xl bg-gray-800">
                   <img 
-                    src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+                    src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
                     alt="Vista de Satélite Ilha do Sal" 
-                    className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity duration-500"
+                    className="w-full h-auto opacity-90 hover:opacity-100 transition-opacity duration-500"
                   />
                   <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6">
                      <p className="text-white font-mono text-sm">CENTRO DE CONTROLO OCEÂNICO - SAL (GVAC)</p>
