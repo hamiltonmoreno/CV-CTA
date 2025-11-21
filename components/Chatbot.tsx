@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Loader2, Bot, FileText, BrainCircuit, Globe, Paperclip } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Bot, FileText, BrainCircuit, Globe, Paperclip, Trash2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { KnowledgeItem } from '../types';
 
@@ -8,15 +8,14 @@ interface Message {
   id: string;
   role: 'user' | 'model';
   text: string;
-  sources?: string[]; // Used to show which docs were used
-  grounding?: boolean; // Used to show if web search was used
+  sources?: string[]; 
+  grounding?: boolean;
 }
 
 interface Props {
   knowledgeBase: KnowledgeItem[];
 }
 
-// System instruction defines Persona and Constraints
 const SYSTEM_INSTRUCTION = `
 Você é o Assistente Virtual Inteligente do Portal CV-CTA (Controladores de Tráfego Aéreo de Cabo Verde).
 
@@ -36,25 +35,56 @@ REGRAS DE RESPOSTA:
 5. Mantenha um tom profissional, técnico e direto (Fraseologia Padrão quando aplicável).
 `;
 
+const QUICK_QUESTIONS = [
+  "Qual a separação mínima radar?",
+  "Procedimentos de falha rádio?",
+  "Requisitos para licença CTA?",
+  "Limites de vento na Torre do Sal?"
+];
+
 const Chatbot: React.FC<Props> = ({ knowledgeBase }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '0', role: 'model', text: 'Olá! Sou o assistente virtual do CV-CTA. Posso consultar manuais internos, regulamentos nacionais (AAC) e padrões internacionais (ICAO). Como posso ajudar?' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat history on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('cv_cta_chat_history');
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error parsing chat history", e);
+      }
+    } else {
+      setMessages([
+        { id: '0', role: 'model', text: 'Olá! Sou o assistente virtual do CV-CTA. Posso consultar manuais internos, regulamentos nacionais (AAC) e padrões internacionais (ICAO). Como posso ajudar?' }
+      ]);
+    }
+  }, []);
+
+  // Save chat history on update
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('cv_cta_chat_history', JSON.stringify(messages));
+    }
+    scrollToBottom();
+  }, [messages, isOpen]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isOpen]);
+  const clearHistory = () => {
+    localStorage.removeItem('cv_cta_chat_history');
+    setMessages([
+        { id: Date.now().toString(), role: 'model', text: 'Histórico limpo. Como posso ajudar agora?' }
+    ]);
+  };
 
   // Simple RAG Retrieval Logic (Client-Side)
-  // Returns the context text string AND a list of full item objects (for media attachment)
   const retrieveContext = (query: string): { contextText: string, sourceTitles: string[], retrievedItems: KnowledgeItem[] } => {
     const queryLower = query.toLowerCase();
     const relevantChunks: string[] = [];
@@ -84,7 +114,7 @@ ${doc.content}
       }
     });
 
-    // Always add the generic ICAO pointer if not already added, to ensure the AI knows it can use generic knowledge
+    // Always add the generic ICAO pointer
     const icaoDoc = knowledgeBase.find(k => k.id === 'INTL-STD-ICAO');
     if (icaoDoc && !sources.has(icaoDoc.title)) {
         relevantChunks.push(`
@@ -101,24 +131,25 @@ ${icaoDoc.content}
     };
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (textOverride?: string) => {
+    const textToSend = textOverride || input;
+    if (!textToSend.trim()) return;
 
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', text: input };
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', text: textToSend };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
       // 1. RETRIEVE (RAG)
-      const { contextText, sourceTitles, retrievedItems } = retrieveContext(input);
+      const { contextText, sourceTitles, retrievedItems } = retrieveContext(textToSend);
 
       // 2. CONSTRUCT MULTIMODAL PAYLOAD
       const parts: any[] = [];
 
       // Text Prompt Part
       const prompt = `
-PERGUNTA DO USUÁRIO: ${input}
+PERGUNTA DO USUÁRIO: ${textToSend}
 
 CONTEXTO RECUPERADO DOS DOCUMENTOS LOCAIS & DIRETIVAS:
 ${contextText || "Nenhum documento local específico encontrado. Baseie-se nos padrões ICAO e utilize o Google Search se necessário."}
@@ -144,7 +175,7 @@ Responda à pergunta do usuário.
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // 3. GENERATE WITH THINKING MODE & GOOGLE SEARCH
+      // 3. GENERATE
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: { parts },
@@ -155,7 +186,6 @@ Responda à pergunta do usuário.
         },
       });
 
-      // Check if grounding was used (web search)
       const hasGrounding = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.length ? true : false;
       
       const aiMessage: Message = {
@@ -188,7 +218,6 @@ Responda à pergunta do usuário.
 
   return (
     <>
-      {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center ${
@@ -199,26 +228,42 @@ Responda à pergunta do usuário.
         {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
       </button>
 
-      {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-full max-w-[380px] h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col border border-gray-200 animate-in slide-in-from-bottom-10 fade-in duration-300 overflow-hidden font-sans">
+        <div className="fixed bottom-24 right-6 z-50 w-full max-w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl flex flex-col border border-gray-200 animate-in slide-in-from-bottom-10 fade-in duration-300 overflow-hidden font-sans">
           
-          {/* Header */}
-          <div className="bg-cv-blue text-white p-4 flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-full">
-              <Bot className="w-5 h-5" />
+          <div className="bg-cv-blue text-white p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-full">
+                <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                <h3 className="font-bold text-sm">Assistente CV-CTA</h3>
+                <p className="text-xs text-blue-100 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                    Online (Docs + ICAO + Web)
+                </p>
+                </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm">Assistente CV-CTA</h3>
-              <p className="text-xs text-blue-100 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                Online (Docs + ICAO + Web)
-              </p>
-            </div>
+            <button onClick={clearHistory} className="p-1 hover:bg-white/10 rounded text-blue-200 hover:text-white" title="Limpar Histórico">
+                <Trash2 className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            {messages.length === 1 && (
+                <div className="grid grid-cols-1 gap-2 mb-4">
+                    {QUICK_QUESTIONS.map((q, idx) => (
+                        <button 
+                            key={idx}
+                            onClick={() => handleSend(q)}
+                            className="text-xs text-left bg-white border border-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition"
+                        >
+                            {q}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {messages.map((msg) => (
               <div
                 key={msg.id}
@@ -234,7 +279,6 @@ Responda à pergunta do usuário.
                   {msg.text}
                 </div>
                 
-                {/* Source Citations */}
                 {msg.role === 'model' && (
                   <div className="mt-1 ml-1 max-w-[85%] flex flex-wrap gap-1">
                     {msg.sources && msg.sources.map((source, idx) => (
@@ -267,7 +311,6 @@ Responda à pergunta do usuário.
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
           <div className="p-4 bg-white border-t border-gray-100">
             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-cv-blue transition-all">
               <input
@@ -275,12 +318,12 @@ Responda à pergunta do usuário.
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Ex: Qual a separação mínima no ACC?"
+                placeholder="Digite a sua questão..."
                 className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
                 disabled={isLoading}
               />
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
                 className={`p-1.5 rounded-full transition-colors ${
                   input.trim() && !isLoading
@@ -290,11 +333,6 @@ Responda à pergunta do usuário.
               >
                 <Send className="w-4 h-4" />
               </button>
-            </div>
-            <div className="text-center mt-2">
-              <p className="text-[10px] text-gray-400">
-                IA pode cometer erros. Verifique fontes oficiais.
-              </p>
             </div>
           </div>
         </div>

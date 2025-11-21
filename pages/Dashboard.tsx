@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TRAFFIC_DATA } from '../constants';
 import { Calendar, Clock, AlertCircle, Activity, Users, ShieldCheck, BellRing } from 'lucide-react';
 import { UserRole, MemberProfile } from '../types';
 import { Link } from 'react-router-dom';
+import Skeleton from '../components/Skeleton';
 
 interface Props {
   userRole?: UserRole;
@@ -12,7 +13,16 @@ interface Props {
 }
 
 const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfile }) => {
-  
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -28,8 +38,8 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
                 </span>
               )}
             </h1>
-            <p className="text-gray-500 text-sm">
-               Bem-vindo, {userProfile?.name || 'Controlador'} | {userProfile?.base || 'Sector Indefinido'}
+            <p className="text-gray-500 text-sm mt-1">
+               {isLoading ? <Skeleton className="w-48 h-4" /> : `Bem-vindo, ${userProfile?.name || 'Controlador'} | ${userProfile?.base || 'Sector Indefinido'}`}
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex items-center gap-4 text-sm">
@@ -57,7 +67,6 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
               <span className="font-medium">Minha Escala</span>
            </button>
            
-           {/* Botão de Associação destacado para ADMIN ou CONTROLADOR */}
            <Link to="/association" className="p-4 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-lg shadow-sm hover:shadow-md transition flex flex-col items-center justify-center gap-2 group">
               <Users className="w-6 h-6 group-hover:scale-110 transition-transform" />
               <span className="font-medium text-center">Portal da Associação</span>
@@ -81,17 +90,28 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
           <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-800 mb-6">Volume de Tráfego (Últimas 24h)</h3>
             <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={TRAFFIC_DATA}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="time" fontSize={12} />
-                  <YAxis fontSize={12} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  <Legend />
-                  <Bar dataKey="arrivals" name="Chegadas" fill="#003399" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="departures" name="Partidas" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {isLoading ? (
+                <div className="w-full h-full flex items-end gap-2">
+                   <Skeleton className="flex-1 h-1/3" />
+                   <Skeleton className="flex-1 h-2/3" />
+                   <Skeleton className="flex-1 h-1/2" />
+                   <Skeleton className="flex-1 h-3/4" />
+                   <Skeleton className="flex-1 h-full" />
+                   <Skeleton className="flex-1 h-1/2" />
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={TRAFFIC_DATA}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="time" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                    <Legend />
+                    <Bar dataKey="arrivals" name="Chegadas" fill="#003399" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="departures" name="Partidas" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -100,30 +120,36 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <BellRing className="w-5 h-5 text-cv-blue" /> Notificações Importantes
             </h3>
+            
             <div className="space-y-4 flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
-              
-              {/* Example 1: Maintenance */}
-              <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r">
-                <h4 className="text-sm font-bold text-blue-800">Manutenção do Sistema Agendada</h4>
-                <p className="text-xs text-blue-700 mt-1">
-                  O sistema FDPS passará por atualização no dia 20/Out das 02:00 às 04:00 UTC. Prevista indisponibilidade temporária.
-                </p>
-              </div>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </>
+              ) : (
+                <>
+                  <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r">
+                    <h4 className="text-sm font-bold text-blue-800">Manutenção do Sistema Agendada</h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                      O sistema FDPS passará por atualização no dia 20/Out das 02:00 às 04:00 UTC. Prevista indisponibilidade temporária.
+                    </p>
+                  </div>
 
-              {/* Example 2: New Circular */}
-              <div className="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r">
-                <h4 className="text-sm font-bold text-emerald-800">Nova Circular Publicada</h4>
-                <p className="text-xs text-emerald-700 mt-1">
-                  AIC 08/25: Atualização dos procedimentos de contingência para falha de comunicações satélite (CPDLC).
-                </p>
-              </div>
+                  <div className="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r">
+                    <h4 className="text-sm font-bold text-emerald-800">Nova Circular Publicada</h4>
+                    <p className="text-xs text-emerald-700 mt-1">
+                      AIC 08/25: Atualização dos procedimentos de contingência para falha de comunicações satélite (CPDLC).
+                    </p>
+                  </div>
 
-              {/* Existing Example preserved for context */}
-              <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
-                <h4 className="text-sm font-bold text-yellow-800">Briefing Obrigatório</h4>
-                <p className="text-xs text-yellow-700 mt-1">Todos os turnos da manhã devem rever a circular 14/25 antes de assumir posição.</p>
-              </div>
-
+                  <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
+                    <h4 className="text-sm font-bold text-yellow-800">Briefing Obrigatório</h4>
+                    <p className="text-xs text-yellow-700 mt-1">Todos os turnos da manhã devem rever a circular 14/25 antes de assumir posição.</p>
+                  </div>
+                </>
+              )}
             </div>
             <button className="mt-4 w-full py-2 text-sm text-cv-blue font-medium hover:underline text-center">
               Ver todo histórico

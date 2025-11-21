@@ -16,10 +16,12 @@ import Register from './pages/Register';
 import PublicResources from './pages/PublicResources';
 import AdminPanel from './pages/AdminPanel';
 import Gallery from './pages/Gallery';
-import Profile from './pages/Profile'; // New Page
+import Profile from './pages/Profile';
 import Chatbot from './components/Chatbot';
 import ScrollToTop from './components/ScrollToTop';
 import BackToTopButton from './components/BackToTopButton';
+import { ToastProvider } from './context/ToastContext';
+import ToastContainer from './components/ToastContainer';
 import { OperationalStatus, UserRole, KnowledgeItem, MemberProfile } from './types';
 import { INITIAL_KNOWLEDGE_BASE, MOCK_MEMBER_PROFILE } from './constants';
 
@@ -73,108 +75,115 @@ const App: React.FC = () => {
   };
 
   return (
-    <HashRouter>
-      <ScrollToTop />
-      <Routes>
-        {/* Auth Routes (No Layout) */}
-        <Route 
-          path="/login" 
-          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />} 
-        />
-        <Route 
-          path="/register" 
-          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
-        />
+    <ToastProvider>
+      <HashRouter>
+        <ScrollToTop />
+        <ToastContainer />
+        <Routes>
+          {/* Auth Routes (No Layout) */}
+          <Route 
+            path="/login" 
+            element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />} 
+          />
+          <Route 
+            path="/register" 
+            element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
+          />
 
-        {/* Protected Routes */}
-        <Route 
-          path="/dashboard" 
-          element={
-            isLoggedIn ? (
-              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
-                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
-                 <main className="flex-grow">
-                    <Dashboard userRole={userRole} userProfile={userProfile} />
-                 </main>
-                 <Chatbot knowledgeBase={knowledgeBase} />
-              </div>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
+          {/* Protected Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              isLoggedIn ? (
+                <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                   <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                   <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
+                   <main className="flex-grow">
+                      <Dashboard userRole={userRole} userProfile={userProfile} />
+                   </main>
+                   <Chatbot knowledgeBase={knowledgeBase} />
+                   <ToastContainer />
+                </div>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
 
-        <Route 
-          path="/association" 
-          element={
-            isLoggedIn ? (
-              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
-                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
-                 <main className="flex-grow">
-                    <Association userRole={userRole} userProfile={userProfile} />
-                 </main>
-                 <Chatbot knowledgeBase={knowledgeBase} />
-              </div>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
+          <Route 
+            path="/association" 
+            element={
+              isLoggedIn ? (
+                <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                   <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                   <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
+                   <main className="flex-grow">
+                      <Association userRole={userRole} userProfile={userProfile} />
+                   </main>
+                   <Chatbot knowledgeBase={knowledgeBase} />
+                   <ToastContainer />
+                </div>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
 
-        <Route 
-          path="/profile" 
-          element={
-            isLoggedIn ? (
-              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
-                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
-                 <main className="flex-grow">
-                    <Profile userProfile={userProfile} onUpdateProfile={handleUpdateProfile} />
-                 </main>
-                 <Chatbot knowledgeBase={knowledgeBase} />
-              </div>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
+          <Route 
+            path="/profile" 
+            element={
+              isLoggedIn ? (
+                <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                   <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                   <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
+                   <main className="flex-grow">
+                      <Profile userProfile={userProfile} onUpdateProfile={handleUpdateProfile} />
+                   </main>
+                   <Chatbot knowledgeBase={knowledgeBase} />
+                   <ToastContainer />
+                </div>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
 
-        <Route 
-          path="/admin" 
-          element={
-            isLoggedIn && userRole === UserRole.ADMIN ? (
-              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
-                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
-                 <main className="flex-grow">
-                    <AdminPanel knowledgeBase={knowledgeBase} onUpdateKnowledgeBase={setKnowledgeBase} />
-                 </main>
-                 <Chatbot knowledgeBase={knowledgeBase} />
-              </div>
-            ) : (
-              <Navigate to="/dashboard" replace />
-            )
-          } 
-        />
+          <Route 
+            path="/admin" 
+            element={
+              isLoggedIn && userRole === UserRole.ADMIN ? (
+                <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                   <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                   <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
+                   <main className="flex-grow">
+                      <AdminPanel knowledgeBase={knowledgeBase} onUpdateKnowledgeBase={setKnowledgeBase} />
+                   </main>
+                   <Chatbot knowledgeBase={knowledgeBase} />
+                   <ToastContainer />
+                </div>
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            } 
+          />
 
-        {/* Public Routes (Wrapped in MainLayout) */}
-        <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} knowledgeBase={knowledgeBase} userProfile={userProfile} />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/resources" element={<PublicResources />} />
-          <Route path="/notams" element={<NotamsPage />} />
-          <Route path="/documents" element={<DocumentsPage />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/gallery" element={<Gallery />} />
-        </Route>
+          {/* Public Routes (Wrapped in MainLayout) */}
+          <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} knowledgeBase={knowledgeBase} userProfile={userProfile} />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/resources" element={<PublicResources />} />
+            <Route path="/notams" element={<NotamsPage />} />
+            <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/gallery" element={<Gallery />} />
+          </Route>
 
-        {/* Catch all - Redirect to Home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </HashRouter>
+          {/* Catch all - Redirect to Home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </HashRouter>
+    </ToastProvider>
   );
 };
 
