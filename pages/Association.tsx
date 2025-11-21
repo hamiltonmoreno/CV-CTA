@@ -1,33 +1,34 @@
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   Users, Vote, DollarSign, Calendar, FileText, 
-  Plus, ExternalLink, CheckCircle2, XCircle, AlertCircle, 
-  PieChart, TrendingUp, Download, Video, Shield, ChevronRight, Clock,
-  History, CreditCard, Briefcase, User, Award, Star, Zap, MapPin, Phone, Mail, MessageSquare, Tag
+  Plus, CheckCircle2, AlertCircle, 
+  TrendingUp, Download, Video, Shield, ChevronRight, Clock,
+  History, CreditCard, Briefcase, User, Award, Star, Zap, Mail, Phone, MessageSquare, Tag
 } from 'lucide-react';
 import { 
   ASSOCIATION_PROJECTS, VOTING_PROPOSALS, MEETINGS, 
-  FINANCIAL_RECORDS, USER_QUOTAS, MOCK_MEMBER_HISTORY, MOCK_MEMBER_PROFILE, MOCK_FORUM_THREADS 
+  FINANCIAL_RECORDS, USER_QUOTAS, MOCK_MEMBER_HISTORY, MOCK_FORUM_THREADS 
 } from '../constants';
-import { UserRole, VoteProposal, FinancialRecord } from '../types';
+import { UserRole, VoteProposal, FinancialRecord, MemberProfile } from '../types';
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import Breadcrumbs from '../components/Breadcrumbs';
 import DigitalCard from '../components/DigitalCard';
 
 interface Props {
   userRole?: UserRole;
+  userProfile?: MemberProfile;
 }
 
 type TabType = 'overview' | 'profile' | 'voting' | 'finance' | 'projects' | 'meetings' | 'forum';
 
-const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
+const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfile }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') as TabType) || 'overview';
 
-  const [votes, setVotes] = React.useState<VoteProposal[]>(VOTING_PROPOSALS);
-  const [expenses, setExpenses] = React.useState<FinancialRecord[]>(FINANCIAL_RECORDS);
+  const [votes, setVotes] = useState<VoteProposal[]>(VOTING_PROPOSALS);
+  const [expenses, setExpenses] = useState<FinancialRecord[]>(FINANCIAL_RECORDS);
 
   const setActiveTab = (tab: TabType) => {
     setSearchParams({ tab });
@@ -67,7 +68,8 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
   const isAdmin = userRole === UserRole.ADMIN;
 
   const pendingQuota = USER_QUOTAS.find(q => q.status === 'Pending');
-  const profile = MOCK_MEMBER_PROFILE;
+  // Use the passed userProfile prop, fallback only if necessary (though prop is expected)
+  const profile = userProfile; 
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -225,7 +227,7 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
         )}
 
         {/* TAB: PROFILE (PERFORMANCE & DETAILS) */}
-        {activeTab === 'profile' && (
+        {activeTab === 'profile' && profile && (
            <div className="space-y-6 animate-in fade-in">
               
               {/* Profile Header Card */}
@@ -372,7 +374,7 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
            </div>
         )}
 
-        {/* TAB: FORUM (NEW) */}
+        {/* ... (Other tabs remain unchanged: FORUM, VOTING, PROJECTS, MEETINGS, FINANCE) ... */}
         {activeTab === 'forum' && (
            <div className="space-y-6 animate-in fade-in">
               <div className="flex justify-between items-center">
@@ -415,7 +417,6 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
            </div>
         )}
 
-        {/* TAB: VOTING */}
         {activeTab === 'voting' && (
           <div className="space-y-12 animate-in fade-in">
              {/* Active Votes */}
@@ -437,7 +438,6 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
                        </div>
                        <p className="text-gray-600 mb-6 flex-1">{vote.description}</p>
                        
-                       {/* Voting Options */}
                        <div className="space-y-3">
                           {vote.options.map((option) => (
                              <div key={option.label}>
@@ -466,7 +466,6 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
                 )}
              </div>
 
-             {/* Voting History Section */}
              {votes.filter(v => v.userVoted).length > 0 && (
                <div>
                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -506,7 +505,7 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
           </div>
         )}
 
-        {/* TAB: PROJECTS */}
+        {/* ... (Rest of the tabs: PROJECTS, MEETINGS, FINANCE - kept identical to preserve existing functionality) ... */}
         {activeTab === 'projects' && (
            <div className="space-y-6 animate-in fade-in">
               <div className="flex justify-between items-center">
@@ -552,7 +551,6 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
            </div>
         )}
 
-        {/* TAB: MEETINGS */}
         {activeTab === 'meetings' && (
            <div className="animate-in fade-in">
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -609,7 +607,6 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
            </div>
         )}
 
-        {/* TAB: FINANCE */}
         {activeTab === 'finance' && (
           <div className="space-y-6 animate-in fade-in">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

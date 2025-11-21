@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   ShieldCheck, Users, FileText, Settings, Check, X, 
   Search, AlertTriangle, Bell, Plus, Trash2, Edit, 
-  Save, DollarSign, TrendingUp, TrendingDown, BrainCircuit, Database, Upload, File, Loader2
+  Save, DollarSign, TrendingUp, TrendingDown, BrainCircuit, Database, Upload, File, Loader2,
+  ToggleLeft, ToggleRight, MessageSquare, CreditCard, Lock, Globe
 } from 'lucide-react';
 import { 
   MOCK_REGISTRATION_REQUESTS, MOCK_NEWS, MOCK_NOTAMS, 
@@ -41,6 +42,21 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
   const [newsList, setNewsList] = useState<NewsItem[]>(MOCK_NEWS);
   const [notamList, setNotamList] = useState<Notam[]>(MOCK_NOTAMS);
   const [financials, setFinancials] = useState<FinancialRecord[]>(FINANCIAL_RECORDS);
+
+  // Settings State
+  const [systemConfig, setSystemConfig] = useState({
+    operationalStatus: 'NORMAL',
+    maintenanceMode: false,
+    allowRegistrations: true,
+    globalBanner: '',
+    quotaValue: 2000,
+    modules: {
+      forum: true,
+      chatbot: true,
+      gallery: true
+    }
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // UI States
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
@@ -174,6 +190,26 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
     };
     setFinancials(prev => [newRecord, ...prev]);
     setIsFinanceModalOpen(false);
+  };
+
+  // --- SETTINGS MANAGEMENT ---
+  const handleSaveSettings = () => {
+    setIsSavingSettings(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsSavingSettings(false);
+      alert('Configurações salvas com sucesso!');
+    }, 800);
+  };
+
+  const toggleModule = (module: 'forum' | 'chatbot' | 'gallery') => {
+    setSystemConfig(prev => ({
+      ...prev,
+      modules: {
+        ...prev.modules,
+        [module]: !prev.modules[module]
+      }
+    }));
   };
 
   // --- AI KNOWLEDGE BASE MANAGEMENT ---
@@ -607,33 +643,148 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
            </div>
         )}
 
-        {/* --- TAB: SETTINGS --- */}
+        {/* --- TAB: SETTINGS (ENHANCED) --- */}
         {activeTab === 'settings' && (
-           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 animate-in fade-in">
-              <h3 className="font-bold text-gray-900 mb-6">Configuração Global do Sistema</h3>
-              <div className="space-y-6 max-w-2xl">
-                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                    <div>
-                       <h4 className="font-bold text-gray-800">Estado Operacional</h4>
-                       <p className="text-sm text-gray-500">Define a barra de status no topo.</p>
+           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 animate-in fade-in space-y-8">
+              
+              <div className="flex justify-between items-center">
+                 <h3 className="font-bold text-gray-900 text-xl">Configuração Global do Sistema</h3>
+                 <button 
+                   onClick={handleSaveSettings}
+                   className="bg-cv-blue text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-800 shadow-sm disabled:opacity-70"
+                   disabled={isSavingSettings}
+                 >
+                   {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                   Salvar Alterações
+                 </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 
+                 {/* System Status */}
+                 <div className="space-y-6">
+                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b pb-2">Estado do Portal</h4>
+                    
+                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white">
+                       <div>
+                          <h4 className="font-bold text-gray-800">Nível Operacional</h4>
+                          <p className="text-sm text-gray-500">Define a barra de alerta no topo.</p>
+                       </div>
+                       <select 
+                         value={systemConfig.operationalStatus}
+                         onChange={(e) => setSystemConfig({...systemConfig, operationalStatus: e.target.value})}
+                         className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-cv-blue"
+                       >
+                          <option value="NORMAL">🟢 Normal</option>
+                          <option value="ATTENTION">🟠 Atenção</option>
+                          <option value="CRITICAL">🔴 Crítico</option>
+                          <option value="MAINTENANCE">🔵 Manutenção</option>
+                       </select>
                     </div>
-                    <select className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-cv-blue">
-                       <option value="NORMAL">🟢 Normal</option>
-                       <option value="ATTENTION">🟠 Atenção</option>
-                       <option value="CRITICAL">🔴 Crítico</option>
-                       <option value="MAINTENANCE">🔵 Manutenção</option>
-                    </select>
-                 </div>
-                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                    <div>
-                       <h4 className="font-bold text-gray-800">Modo de Manutenção</h4>
-                       <p className="text-sm text-gray-500">Bloqueia o acesso público ao portal.</p>
+
+                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white">
+                       <div>
+                          <h4 className="font-bold text-gray-800">Modo de Manutenção</h4>
+                          <p className="text-sm text-gray-500">Bloqueia o acesso público.</p>
+                       </div>
+                       <button 
+                         onClick={() => setSystemConfig({...systemConfig, maintenanceMode: !systemConfig.maintenanceMode})}
+                         className={`w-12 h-6 rounded-full relative transition-colors ${systemConfig.maintenanceMode ? 'bg-cv-blue' : 'bg-gray-200'}`}
+                       >
+                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${systemConfig.maintenanceMode ? 'translate-x-6' : ''}`}></div>
+                       </button>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-cv-blue"></div>
-                    </label>
+
+                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white">
+                       <div>
+                          <h4 className="font-bold text-gray-800">Permitir Novos Registos</h4>
+                          <p className="text-sm text-gray-500">Aceitar novos pedidos de acesso.</p>
+                       </div>
+                       <button 
+                         onClick={() => setSystemConfig({...systemConfig, allowRegistrations: !systemConfig.allowRegistrations})}
+                         className={`w-12 h-6 rounded-full relative transition-colors ${systemConfig.allowRegistrations ? 'bg-green-500' : 'bg-gray-200'}`}
+                       >
+                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${systemConfig.allowRegistrations ? 'translate-x-6' : ''}`}></div>
+                       </button>
+                    </div>
                  </div>
+
+                 {/* Association Parameters */}
+                 <div className="space-y-6">
+                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b pb-2">Parâmetros da Associação</h4>
+                    
+                    <div className="p-4 border border-gray-200 rounded-lg bg-white">
+                       <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                             <CreditCard className="w-4 h-4 text-gray-500" /> Valor da Cota Mensal
+                          </h4>
+                       </div>
+                       <div className="relative">
+                          <input 
+                            type="number" 
+                            value={systemConfig.quotaValue}
+                            onChange={(e) => setSystemConfig({...systemConfig, quotaValue: Number(e.target.value)})}
+                            className="w-full pl-3 pr-12 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cv-blue outline-none"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-bold">CVE</span>
+                       </div>
+                       <p className="text-xs text-gray-500 mt-2">Este valor será aplicado automaticamente aos novos descontos em folha.</p>
+                    </div>
+
+                    <div className="p-4 border border-gray-200 rounded-lg bg-white">
+                       <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-gray-500" /> Segurança
+                       </h4>
+                       <button className="w-full border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg transition">
+                          Forçar Reset de Senhas (Todos)
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* Communication */}
+                 <div className="lg:col-span-2 space-y-6">
+                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b pb-2">Comunicação & Módulos</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div className="p-4 border border-gray-200 rounded-lg bg-white">
+                          <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                             <Globe className="w-4 h-4 text-blue-500" /> Banner Global
+                          </h4>
+                          <textarea 
+                            rows={3}
+                            value={systemConfig.globalBanner}
+                            onChange={(e) => setSystemConfig({...systemConfig, globalBanner: e.target.value})}
+                            placeholder="Escreva um alerta para aparecer em todas as páginas (opcional)..."
+                            className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cv-blue outline-none resize-none"
+                          ></textarea>
+                       </div>
+
+                       <div className="p-4 border border-gray-200 rounded-lg bg-white">
+                          <h4 className="font-bold text-gray-800 mb-4">Gestão de Módulos</h4>
+                          <div className="space-y-3">
+                             <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-700 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-gray-400"/> Fórum Interno</span>
+                                <button onClick={() => toggleModule('forum')} className={`w-10 h-5 rounded-full relative transition-colors ${systemConfig.modules.forum ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                                   <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${systemConfig.modules.forum ? 'translate-x-5' : ''}`}></div>
+                                </button>
+                             </div>
+                             <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-700 flex items-center gap-2"><BrainCircuit className="w-4 h-4 text-gray-400"/> Chatbot IA</span>
+                                <button onClick={() => toggleModule('chatbot')} className={`w-10 h-5 rounded-full relative transition-colors ${systemConfig.modules.chatbot ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                                   <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${systemConfig.modules.chatbot ? 'translate-x-5' : ''}`}></div>
+                                </button>
+                             </div>
+                             <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-700 flex items-center gap-2"><FileText className="w-4 h-4 text-gray-400"/> Galeria Multimédia</span>
+                                <button onClick={() => toggleModule('gallery')} className={`w-10 h-5 rounded-full relative transition-colors ${systemConfig.modules.gallery ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                                   <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${systemConfig.modules.gallery ? 'translate-x-5' : ''}`}></div>
+                                </button>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
               </div>
            </div>
         )}

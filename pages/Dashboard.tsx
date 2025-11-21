@@ -1,33 +1,18 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TRAFFIC_DATA } from '../constants';
-import { Calendar, Clock, FileText, AlertCircle, Activity, Users, ShieldCheck, Check, Phone, Mail, X, Save, Loader2 } from 'lucide-react';
-import { UserRole } from '../types';
+import { Calendar, Clock, AlertCircle, Activity, Users, ShieldCheck, BellRing } from 'lucide-react';
+import { UserRole, MemberProfile } from '../types';
 import { Link } from 'react-router-dom';
 
 interface Props {
   userRole?: UserRole;
+  userProfile?: MemberProfile;
 }
 
-const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [profileData, setProfileData] = useState({
-    email: 'user@cta.cv',
-    phone: '+238 999 9999'
-  });
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    // Simulate API save
-    setTimeout(() => {
-      setIsSaving(false);
-      setIsProfileModalOpen(false);
-    }, 1000);
-  };
-
+const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfile }) => {
+  
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -43,7 +28,9 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
                 </span>
               )}
             </h1>
-            <p className="text-gray-500 text-sm">Bem-vindo, Controlador Nível 1 | Sector Sal Oceânico</p>
+            <p className="text-gray-500 text-sm">
+               Bem-vindo, {userProfile?.name || 'Controlador'} | {userProfile?.base || 'Sector Indefinido'}
+            </p>
           </div>
           <div className="mt-4 md:mt-0 flex items-center gap-4 text-sm">
              <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
@@ -54,12 +41,12 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
                 <div className="font-mono text-lg font-bold text-gray-900">14:32 UTC</div>
                 <div className="text-xs text-gray-400">14 OUT 2025</div>
              </div>
-             <button 
-               onClick={() => setIsProfileModalOpen(true)}
+             <Link 
+               to="/profile"
                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors text-sm"
              >
                Meu Perfil
-             </button>
+             </Link>
           </div>
         </div>
 
@@ -110,20 +97,33 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
 
           {/* Notifications / Status Side Panel */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Avisos Internos</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <BellRing className="w-5 h-5 text-cv-blue" /> Notificações Importantes
+            </h3>
             <div className="space-y-4 flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+              
+              {/* Example 1: Maintenance */}
+              <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r">
+                <h4 className="text-sm font-bold text-blue-800">Manutenção do Sistema Agendada</h4>
+                <p className="text-xs text-blue-700 mt-1">
+                  O sistema FDPS passará por atualização no dia 20/Out das 02:00 às 04:00 UTC. Prevista indisponibilidade temporária.
+                </p>
+              </div>
+
+              {/* Example 2: New Circular */}
+              <div className="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r">
+                <h4 className="text-sm font-bold text-emerald-800">Nova Circular Publicada</h4>
+                <p className="text-xs text-emerald-700 mt-1">
+                  AIC 08/25: Atualização dos procedimentos de contingência para falha de comunicações satélite (CPDLC).
+                </p>
+              </div>
+
+              {/* Existing Example preserved for context */}
               <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
                 <h4 className="text-sm font-bold text-yellow-800">Briefing Obrigatório</h4>
                 <p className="text-xs text-yellow-700 mt-1">Todos os turnos da manhã devem rever a circular 14/25 antes de assumir posição.</p>
               </div>
-              <div className="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r">
-                <h4 className="text-sm font-bold text-blue-800">Manutenção Radar</h4>
-                <p className="text-xs text-blue-700 mt-1">Radar Secundário (SSR) em manutenção preventiva das 0200Z às 0400Z.</p>
-              </div>
-               <div className="p-3 bg-gray-50 border-l-4 border-gray-300 rounded-r">
-                <h4 className="text-sm font-bold text-gray-800">Escala do Fim de Semana</h4>
-                <p className="text-xs text-gray-600 mt-1">Publicada a revisão 2 da escala de Outubro.</p>
-              </div>
+
             </div>
             <button className="mt-4 w-full py-2 text-sm text-cv-blue font-medium hover:underline text-center">
               Ver todo histórico
@@ -131,66 +131,6 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER }) => {
           </div>
         </div>
       </div>
-
-      {/* Profile Edit Modal */}
-      {isProfileModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-xl shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">Editar Meu Perfil</h2>
-              <button onClick={() => setIsProfileModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSaveProfile} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email de Contacto</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="email" 
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                    className="w-full pl-10 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cv-blue focus:border-transparent outline-none"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telemóvel</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="tel" 
-                    value={profileData.phone}
-                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                    className="w-full pl-10 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cv-blue focus:border-transparent outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                 <button 
-                   type="button"
-                   onClick={() => setIsProfileModalOpen(false)}
-                   className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
-                 >
-                   Cancelar
-                 </button>
-                 <button 
-                   type="submit"
-                   disabled={isSaving}
-                   className="flex-1 py-2 bg-cv-blue text-white rounded-lg font-medium hover:bg-blue-800 flex items-center justify-center gap-2 disabled:opacity-70"
-                 >
-                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                   Salvar Alterações
-                 </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

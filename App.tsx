@@ -16,14 +16,15 @@ import Register from './pages/Register';
 import PublicResources from './pages/PublicResources';
 import AdminPanel from './pages/AdminPanel';
 import Gallery from './pages/Gallery';
+import Profile from './pages/Profile'; // New Page
 import Chatbot from './components/Chatbot';
 import ScrollToTop from './components/ScrollToTop';
 import BackToTopButton from './components/BackToTopButton';
-import { OperationalStatus, UserRole, KnowledgeItem } from './types';
-import { INITIAL_KNOWLEDGE_BASE } from './constants';
+import { OperationalStatus, UserRole, KnowledgeItem, MemberProfile } from './types';
+import { INITIAL_KNOWLEDGE_BASE, MOCK_MEMBER_PROFILE } from './constants';
 
 // Layout Wrapper for standard pages (Header + Nav + Content + Footer)
-const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: () => void, knowledgeBase: KnowledgeItem[]}> = ({ isLoggedIn, userRole, onLogout, knowledgeBase }) => {
+const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: () => void, knowledgeBase: KnowledgeItem[], userProfile?: MemberProfile}> = ({ isLoggedIn, userRole, onLogout, knowledgeBase, userProfile }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900 relative">
       <OperationalHeader 
@@ -34,6 +35,7 @@ const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: 
         isLoggedIn={isLoggedIn}
         userRole={userRole} 
         onLogoutClick={onLogout}
+        userProfile={userProfile}
       />
       <main className="flex-grow">
          <Outlet />
@@ -52,6 +54,9 @@ const App: React.FC = () => {
   // Centralized State for AI Knowledge Base
   const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeItem[]>(INITIAL_KNOWLEDGE_BASE);
 
+  // Centralized State for User Profile (Single Source of Truth)
+  const [userProfile, setUserProfile] = useState<MemberProfile>(MOCK_MEMBER_PROFILE);
+
   const handleLogin = (role: UserRole) => {
     setIsLoggedIn(true);
     setUserRole(role);
@@ -61,6 +66,10 @@ const App: React.FC = () => {
     setIsLoggedIn(false);
     setUserRole(UserRole.PUBLIC);
     window.location.hash = '#/';
+  };
+
+  const handleUpdateProfile = (updatedData: Partial<MemberProfile>) => {
+    setUserProfile(prev => ({ ...prev, ...updatedData }));
   };
 
   return (
@@ -84,9 +93,9 @@ const App: React.FC = () => {
             isLoggedIn ? (
               <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
                  <main className="flex-grow">
-                    <Dashboard userRole={userRole} />
+                    <Dashboard userRole={userRole} userProfile={userProfile} />
                  </main>
                  <Chatbot knowledgeBase={knowledgeBase} />
               </div>
@@ -102,9 +111,27 @@ const App: React.FC = () => {
             isLoggedIn ? (
               <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
                  <main className="flex-grow">
-                    <Association userRole={userRole} />
+                    <Association userRole={userRole} userProfile={userProfile} />
+                 </main>
+                 <Chatbot knowledgeBase={knowledgeBase} />
+              </div>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+
+        <Route 
+          path="/profile" 
+          element={
+            isLoggedIn ? (
+              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
+                 <main className="flex-grow">
+                    <Profile userProfile={userProfile} onUpdateProfile={handleUpdateProfile} />
                  </main>
                  <Chatbot knowledgeBase={knowledgeBase} />
               </div>
@@ -120,7 +147,7 @@ const App: React.FC = () => {
             isLoggedIn && userRole === UserRole.ADMIN ? (
               <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} userProfile={userProfile} />
                  <main className="flex-grow">
                     <AdminPanel knowledgeBase={knowledgeBase} onUpdateKnowledgeBase={setKnowledgeBase} />
                  </main>
@@ -133,7 +160,7 @@ const App: React.FC = () => {
         />
 
         {/* Public Routes (Wrapped in MainLayout) */}
-        <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} knowledgeBase={knowledgeBase} />}>
+        <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} knowledgeBase={knowledgeBase} userProfile={userProfile} />}>
           <Route path="/" element={<Home />} />
           <Route path="/resources" element={<PublicResources />} />
           <Route path="/notams" element={<NotamsPage />} />
