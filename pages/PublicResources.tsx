@@ -1,18 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, CloudSun, ArrowRight, BookOpen, Info, ExternalLink, Globe, Link as LinkIcon, Building2 } from 'lucide-react';
+import { MapPin, CloudSun, ArrowRight, BookOpen, Info, ExternalLink, Globe, Link as LinkIcon, Building2, RefreshCw } from 'lucide-react';
 
 const PublicResources: React.FC = () => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState('Agora mesmo');
+
+  const handleRefreshWeather = () => {
+    setIsRefreshing(true);
+    // Simulate network request
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setLastUpdated('Atualizado');
+      setTimeout(() => setLastUpdated('Agora mesmo'), 2000);
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 animate-in fade-in duration-500 pb-20">
       {/* Hero Header */}
       <div className="bg-gray-900 text-white py-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
            <img 
-             src="https://images.unsplash.com/photo-1559297434-fae8a1916a79?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+             src="https://images.unsplash.com/photo-1559297434-fae8a1916a79?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80&fm=webp" 
              alt="Aeronautical Charts" 
              className="w-full h-full object-cover"
+             loading="lazy"
            />
         </div>
         <div className="max-w-7xl mx-auto px-4 relative z-10">
@@ -77,7 +91,18 @@ const PublicResources: React.FC = () => {
                      <CloudSun className="w-5 h-5 text-amber-500" />
                      Meteorologia Aeronáutica (METAR)
                   </h3>
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold">Live</span>
+                  <div className="flex items-center gap-3">
+                     <span className="text-xs text-gray-500 italic hidden sm:block">{lastUpdated}</span>
+                     <button 
+                       onClick={handleRefreshWeather}
+                       disabled={isRefreshing}
+                       className={`p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-cv-blue transition ${isRefreshing ? 'animate-spin' : ''}`}
+                       title="Atualizar Dados"
+                     >
+                        <RefreshCw className="w-4 h-4" />
+                     </button>
+                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold">Live</span>
+                  </div>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-sm">

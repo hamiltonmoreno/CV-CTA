@@ -13,6 +13,14 @@ export enum OperationalStatus {
   MAINTENANCE = 'MAINTENANCE'
 }
 
+export interface Comment {
+  id: string;
+  author: string;
+  date: string;
+  content: string;
+  role?: string;
+}
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -20,6 +28,7 @@ export interface NewsItem {
   date: string;
   category: 'Operacional' | 'Formação' | 'Institucional';
   imageUrl?: string;
+  comments?: Comment[];
 }
 
 export interface Notam {

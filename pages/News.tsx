@@ -1,19 +1,28 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MOCK_NEWS } from '../constants';
-import { Calendar, ChevronRight, ChevronLeft, Tag, Search, X, Share2, Clock, Filter, User, Bookmark } from 'lucide-react';
-import { NewsItem } from '../types';
+import { Calendar, ChevronRight, ChevronLeft, Tag, Search, X, Share2, Clock, Filter, User, Bookmark, MessageSquare, Send } from 'lucide-react';
+import { NewsItem, Comment } from '../types';
+import Breadcrumbs from '../components/Breadcrumbs';
 
 const News: React.FC = () => {
+  // State for News List (to allow persistence of comments during session)
+  const [newsList, setNewsList] = useState<NewsItem[]>(MOCK_NEWS);
+  
   const [selectedCategory, setSelectedCategory] = useState<'Todas' | 'Operacional' | 'Formação' | 'Institucional'>('Todas');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<{start: string, end: string}>({ start: '', end: '' });
   const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   
+  // Comments State
+  const [newCommentText, setNewCommentText] = useState('');
+  
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
+  
+  const newsContainerRef = useRef<HTMLDivElement>(null);
 
   const categories = ['Todas', 'Operacional', 'Formação', 'Institucional'];
 
@@ -22,8 +31,17 @@ const News: React.FC = () => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, dateRange]);
 
+  // Scroll to top of list on page change
+  useEffect(() => {
+    if (currentPage > 1 && newsContainerRef.current) {
+      const offset = 100; // Approx header height
+      const top = newsContainerRef.current.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }, [currentPage]);
+
   // Filter logic
-  const filteredNews = MOCK_NEWS.filter(news => {
+  const filteredNews = newsList.filter(news => {
     // Category Filter
     const matchesCategory = selectedCategory === 'Todas' || news.category === selectedCategory;
     
@@ -56,6 +74,7 @@ const News: React.FC = () => {
 
   const handleArticleClick = (article: NewsItem) => {
     setSelectedArticle(article);
+    setNewCommentText('');
   };
 
   const clearFilters = () => {
@@ -64,9 +83,40 @@ const News: React.FC = () => {
     setDateRange({ start: '', end: '' });
   };
 
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentText.trim() || !selectedArticle) return;
+
+    const newComment: Comment = {
+      id: Date.now().toString(),
+      author: 'Visitante', // In a real app, this would be the logged-in user's name
+      date: new Date().toISOString().split('T')[0],
+      content: newCommentText,
+      role: 'Leitor'
+    };
+
+    // Update the main list state to persist the comment
+    setNewsList(prevList => prevList.map(item => {
+      if (item.id === selectedArticle.id) {
+        return {
+          ...item,
+          comments: [newComment, ...(item.comments || [])]
+        };
+      }
+      return item;
+    }));
+
+    // Also update the currently selected article to reflect change immediately in UI
+    setSelectedArticle(prev => prev ? ({
+      ...prev,
+      comments: [newComment, ...(prev.comments || [])]
+    }) : null);
+
+    setNewCommentText('');
+  };
+
   // Helper to estimate reading time
   const calculateReadingTime = (text: string) => {
-    // Simulating full content length by multiplying summary
     const simulatedWordCount = text.split(' ').length * 5; 
     const wordsPerMinute = 200;
     const minutes = Math.ceil(simulatedWordCount / wordsPerMinute);
@@ -79,6 +129,7 @@ const News: React.FC = () => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 py-10">
         <div className="max-w-7xl mx-auto px-4">
+          <Breadcrumbs />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Sala de Imprensa</h1>
           <p className="text-gray-600 text-lg">Atualizações operacionais, comunicados oficiais e notícias da comunidade CTA.</p>
         </div>
@@ -180,9 +231,10 @@ const News: React.FC = () => {
             className="relative w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden shadow-xl mb-12 cursor-pointer group"
           >
             <img 
-              src={featuredNews.imageUrl} 
+              src={`${featuredNews.imageUrl}?w=1200&q=80&fm=webp`} 
               alt={featuredNews.title} 
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              fetchPriority="high"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-6 md:p-10 max-w-3xl">
@@ -202,108 +254,113 @@ const News: React.FC = () => {
           </div>
         )}
 
-        {/* News Grid */}
-        {paginatedNews.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {paginatedNews.map((news) => (
-                <article 
-                  key={news.id} 
-                  onClick={() => handleArticleClick(news)}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col h-full"
+        {/* News Grid Container with Ref for scrolling */}
+        <div ref={newsContainerRef}>
+            {paginatedNews.length > 0 ? (
+            <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {paginatedNews.map((news) => (
+                    <article 
+                    key={news.id} 
+                    onClick={() => handleArticleClick(news)}
+                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col h-full"
+                    >
+                    <div className="relative h-56 overflow-hidden">
+                        <img 
+                        src={`${news.imageUrl}?w=600&q=80&fm=webp`}
+                        alt={news.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                        />
+                        <div className="absolute top-3 left-3">
+                        <span className={`
+                            text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide shadow-sm
+                            ${news.category === 'Operacional' ? 'bg-red-100 text-red-800' : 
+                            news.category === 'Formação' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}
+                        `}>
+                            {news.category}
+                        </span>
+                        </div>
+                    </div>
+                    <div className="p-6 flex flex-col flex-1">
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                        <Calendar className="w-3 h-3" /> {news.date}
+                        <span className="mx-1">•</span>
+                        <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {news.comments?.length || 0}</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-cv-blue transition-colors">
+                        {news.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-1">
+                        {news.summary}
+                        </p>
+                        <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+                        <span className="text-cv-blue text-sm font-medium group-hover:underline">Ler Mais</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-cv-blue group-hover:translate-x-1 transition-transform" />
+                        </div>
+                    </div>
+                    </article>
+                ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-gray-200">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-white hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white text-gray-600"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    
+                    {/* Page Numbers */}
+                    <div className="flex gap-2">
+                        {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-10 h-10 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                                    currentPage === page 
+                                    ? 'bg-cv-blue text-white shadow-md' 
+                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-white hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white text-gray-600"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+                )}
+            </>
+            ) : (
+            <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+                <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">Nenhuma notícia encontrada</h3>
+                <p className="text-gray-500">
+                    {dateRange.start || dateRange.end 
+                    ? "Nenhum resultado neste intervalo de datas." 
+                    : "Tente ajustar os filtros ou a pesquisa."}
+                </p>
+                <button 
+                    onClick={clearFilters}
+                    className="mt-4 text-cv-blue font-medium hover:underline"
                 >
-                  <div className="relative h-56 overflow-hidden">
-                    <img 
-                      src={news.imageUrl} 
-                      alt={news.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute top-3 left-3">
-                       <span className={`
-                         text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide shadow-sm
-                         ${news.category === 'Operacional' ? 'bg-red-100 text-red-800' : 
-                           news.category === 'Formação' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}
-                       `}>
-                         {news.category}
-                       </span>
-                    </div>
-                  </div>
-                  <div className="p-6 flex flex-col flex-1">
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-                      <Calendar className="w-3 h-3" /> {news.date}
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-cv-blue transition-colors">
-                      {news.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-1">
-                      {news.summary}
-                    </p>
-                    <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-                      <span className="text-cv-blue text-sm font-medium group-hover:underline">Ler Mais</span>
-                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-cv-blue group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </article>
-              ))}
+                    Limpar todos os filtros
+                </button>
             </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-               <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-gray-200">
-                   <button
-                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                       disabled={currentPage === 1}
-                       className="p-2 rounded-lg border border-gray-300 hover:bg-white hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white text-gray-600"
-                   >
-                       <ChevronLeft className="w-5 h-5" />
-                   </button>
-                   
-                   {/* Page Numbers (Simplified) */}
-                   <div className="flex gap-2">
-                      {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-                        <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-10 h-10 rounded-lg font-medium transition-colors flex items-center justify-center ${
-                                currentPage === page 
-                                ? 'bg-cv-blue text-white shadow-md' 
-                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                            }`}
-                        >
-                            {page}
-                        </button>
-                      ))}
-                   </div>
-
-                   <button
-                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                       disabled={currentPage === totalPages}
-                       className="p-2 rounded-lg border border-gray-300 hover:bg-white hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white text-gray-600"
-                   >
-                       <ChevronRight className="w-5 h-5" />
-                   </button>
-               </div>
             )}
-          </>
-        ) : (
-           <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-              <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
-                 <Search className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">Nenhuma notícia encontrada</h3>
-              <p className="text-gray-500">
-                {dateRange.start || dateRange.end 
-                  ? "Nenhum resultado neste intervalo de datas." 
-                  : "Tente ajustar os filtros ou a pesquisa."}
-              </p>
-              <button 
-                onClick={clearFilters}
-                className="mt-4 text-cv-blue font-medium hover:underline"
-              >
-                Limpar todos os filtros
-              </button>
-           </div>
-        )}
+        </div>
       </div>
 
       {/* Article Modal */}
@@ -324,7 +381,7 @@ const News: React.FC = () => {
               {/* Modal Image Header */}
               <div className="h-64 md:h-80 w-full shrink-0 relative">
                 <img 
-                  src={selectedArticle.imageUrl} 
+                  src={`${selectedArticle.imageUrl}?w=1200&q=80&fm=webp`}
                   alt={selectedArticle.title} 
                   className="w-full h-full object-cover"
                 />
@@ -416,6 +473,60 @@ const News: React.FC = () => {
                         <p>
                            As equipas técnicas iniciarão a fase de implementação nas próximas semanas. Solicita-se a todos os colaboradores que consultem a documentação técnica detalhada disponível na Área do Associado.
                         </p>
+                    </div>
+                 </div>
+
+                 {/* --- COMMENTS SECTION --- */}
+                 <div className="border-t border-gray-100 pt-10 mt-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                       <MessageSquare className="w-6 h-6 text-cv-blue" /> Comentários ({selectedArticle.comments?.length || 0})
+                    </h3>
+
+                    {/* Comments List */}
+                    <div className="space-y-6 mb-10">
+                       {selectedArticle.comments && selectedArticle.comments.length > 0 ? (
+                          selectedArticle.comments.map((comment) => (
+                             <div key={comment.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="flex justify-between items-start mb-2">
+                                   <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 bg-cv-blue/10 rounded-full flex items-center justify-center text-cv-blue font-bold text-xs">
+                                         {comment.author.substring(0, 2).toUpperCase()}
+                                      </div>
+                                      <div>
+                                         <span className="font-bold text-gray-900 text-sm block leading-none">{comment.author}</span>
+                                         {comment.role && <span className="text-[10px] text-gray-500 font-medium uppercase">{comment.role}</span>}
+                                      </div>
+                                   </div>
+                                   <span className="text-xs text-gray-400">{comment.date}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 ml-10">{comment.content}</p>
+                             </div>
+                          ))
+                       ) : (
+                          <p className="text-gray-500 text-sm italic text-center py-4">Ainda não existem comentários. Seja o primeiro a comentar!</p>
+                       )}
+                    </div>
+
+                    {/* Add Comment Form */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                       <h4 className="text-sm font-bold text-gray-700 mb-3">Deixe o seu comentário</h4>
+                       <form onSubmit={handleAddComment}>
+                          <textarea
+                             value={newCommentText}
+                             onChange={(e) => setNewCommentText(e.target.value)}
+                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cv-blue focus:border-transparent outline-none text-sm min-h-[100px] resize-y"
+                             placeholder="Escreva aqui a sua opinião..."
+                             required
+                          ></textarea>
+                          <div className="flex justify-end mt-3">
+                             <button 
+                               type="submit"
+                               className="bg-cv-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition flex items-center gap-2"
+                             >
+                                <Send className="w-4 h-4" /> Publicar
+                             </button>
+                          </div>
+                       </form>
                     </div>
                  </div>
 
