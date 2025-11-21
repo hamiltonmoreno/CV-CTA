@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TRAFFIC_DATA } from '../constants';
-import { Calendar, Clock, AlertCircle, Activity, Users, ShieldCheck, BellRing } from 'lucide-react';
+import { Calendar, Clock, AlertCircle, Activity, Users, ShieldCheck, BellRing, X, CheckSquare, Square } from 'lucide-react';
 import { UserRole, MemberProfile } from '../types';
 import { Link } from 'react-router-dom';
 import Skeleton from '../components/Skeleton';
@@ -14,6 +14,13 @@ interface Props {
 
 const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfile }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isSopModalOpen, setIsSopModalOpen] = useState(false);
+  const [checklist, setChecklist] = useState({
+    notifySupervisor: false,
+    checkFrequency: false,
+    reviewMetar: false,
+    clearAirspace: false
+  });
 
   useEffect(() => {
     // Simulate data loading
@@ -22,6 +29,20 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  const toggleCheck = (key: keyof typeof checklist) => {
+    setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const resetChecklist = () => {
+    setChecklist({
+        notifySupervisor: false,
+        checkFrequency: false,
+        reviewMetar: false,
+        clearAirspace: false
+    });
+    setIsSopModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -77,7 +98,11 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
               <Clock className="w-6 h-6 text-amber-500 group-hover:scale-110 transition-transform" />
               <span className="font-medium">Trocar Turno</span>
            </button>
-           <button className="p-4 bg-white text-gray-700 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition flex flex-col items-center justify-center gap-2 group">
+           
+           <button 
+             onClick={() => setIsSopModalOpen(true)}
+             className="p-4 bg-white text-gray-700 border border-gray-200 rounded-lg shadow-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition flex flex-col items-center justify-center gap-2 group"
+           >
               <AlertCircle className="w-6 h-6 text-red-500 group-hover:scale-110 transition-transform" />
               <span className="font-medium">Emergency SOP</span>
            </button>
@@ -157,6 +182,66 @@ const Dashboard: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfil
           </div>
         </div>
       </div>
+
+      {/* Emergency SOP Modal */}
+      {isSopModalOpen && (
+        <div className="fixed inset-0 bg-red-900/90 z-50 flex items-center justify-center p-4 animate-in fade-in">
+           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="bg-red-600 text-white p-4 flex justify-between items-center">
+                 <h2 className="text-lg font-bold flex items-center gap-2">
+                    <AlertCircle className="w-6 h-6" /> PROTOCOLO DE EMERGÊNCIA
+                 </h2>
+                 <button onClick={resetChecklist} className="text-white/80 hover:text-white">
+                    <X className="w-6 h-6" />
+                 </button>
+              </div>
+              <div className="p-6">
+                 <p className="text-sm text-gray-600 mb-6">Selecione as ações conforme forem realizadas para registo automático no log operacional.</p>
+                 
+                 <div className="space-y-4">
+                    <button 
+                      onClick={() => toggleCheck('notifySupervisor')}
+                      className={`w-full p-4 rounded-lg border flex items-center gap-3 transition-all ${checklist.notifySupervisor ? 'bg-green-50 border-green-500 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-700'}`}
+                    >
+                       {checklist.notifySupervisor ? <CheckSquare className="w-6 h-6 text-green-600" /> : <Square className="w-6 h-6 text-gray-400" />}
+                       <span className="font-bold">1. Notificar Supervisor ACC</span>
+                    </button>
+
+                    <button 
+                      onClick={() => toggleCheck('checkFrequency')}
+                      className={`w-full p-4 rounded-lg border flex items-center gap-3 transition-all ${checklist.checkFrequency ? 'bg-green-50 border-green-500 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-700'}`}
+                    >
+                       {checklist.checkFrequency ? <CheckSquare className="w-6 h-6 text-green-600" /> : <Square className="w-6 h-6 text-gray-400" />}
+                       <span className="font-bold">2. Verificar Frequência de Emergência (121.5)</span>
+                    </button>
+
+                    <button 
+                      onClick={() => toggleCheck('reviewMetar')}
+                      className={`w-full p-4 rounded-lg border flex items-center gap-3 transition-all ${checklist.reviewMetar ? 'bg-green-50 border-green-500 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-700'}`}
+                    >
+                       {checklist.reviewMetar ? <CheckSquare className="w-6 h-6 text-green-600" /> : <Square className="w-6 h-6 text-gray-400" />}
+                       <span className="font-bold">3. Validar Condições Meteorológicas (METAR/SPECI)</span>
+                    </button>
+
+                    <button 
+                      onClick={() => toggleCheck('clearAirspace')}
+                      className={`w-full p-4 rounded-lg border flex items-center gap-3 transition-all ${checklist.clearAirspace ? 'bg-green-50 border-green-500 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-700'}`}
+                    >
+                       {checklist.clearAirspace ? <CheckSquare className="w-6 h-6 text-green-600" /> : <Square className="w-6 h-6 text-gray-400" />}
+                       <span className="font-bold">4. Libertar Espaço Aéreo Adjacente</span>
+                    </button>
+                 </div>
+
+                 <div className="mt-8 flex justify-end gap-3">
+                    <button onClick={resetChecklist} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                    <button className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm">
+                       Confirmar & Reportar
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

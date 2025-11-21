@@ -3,18 +3,19 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   Users, Vote, DollarSign, Calendar, FileText, 
-  Plus, CheckCircle2, AlertCircle, 
+  Plus, CheckCircle2, AlertCircle, X,
   TrendingUp, Download, Video, Shield, ChevronRight, Clock,
-  History, CreditCard, Briefcase, User, Award, Star, Zap, Mail, Phone, MessageSquare, Tag
+  History, CreditCard, Briefcase, User, Award, Star, Zap, Mail, Phone, MessageSquare, Tag, ArrowLeft, Send
 } from 'lucide-react';
 import { 
   ASSOCIATION_PROJECTS, VOTING_PROPOSALS, MEETINGS, 
   FINANCIAL_RECORDS, USER_QUOTAS, MOCK_MEMBER_HISTORY, MOCK_FORUM_THREADS 
 } from '../constants';
-import { UserRole, VoteProposal, FinancialRecord, MemberProfile } from '../types';
+import { UserRole, VoteProposal, FinancialRecord, MemberProfile, Project, ForumThread } from '../types';
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import Breadcrumbs from '../components/Breadcrumbs';
 import DigitalCard from '../components/DigitalCard';
+import { useToast } from '../context/ToastContext';
 
 interface Props {
   userRole?: UserRole;
@@ -25,13 +26,25 @@ type TabType = 'overview' | 'profile' | 'voting' | 'finance' | 'projects' | 'mee
 
 const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProfile }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addToast } = useToast();
   const activeTab = (searchParams.get('tab') as TabType) || 'overview';
 
   const [votes, setVotes] = useState<VoteProposal[]>(VOTING_PROPOSALS);
   const [expenses, setExpenses] = useState<FinancialRecord[]>(FINANCIAL_RECORDS);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  
+  // Forum States
+  const [selectedThread, setSelectedThread] = useState<ForumThread | null>(null);
+  const [replyText, setReplyText] = useState('');
+  
+  // Finance Date Filter State
+  const [financeDateFilter, setFinanceDateFilter] = useState<{start: string, end: string}>({ start: '', end: '' });
 
   const setActiveTab = (tab: TabType) => {
     setSearchParams({ tab });
+    // Clear sub-views when changing main tabs
+    if (tab !== 'projects') setSelectedProject(null);
+    if (tab !== 'forum') setSelectedThread(null);
   };
 
   // Mock Vote Action
@@ -48,16 +61,39 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
       }
       return p;
     }));
+    addToast('Voto registado com sucesso!', 'success');
   };
 
   // Mock Receipt Download
   const handleDownloadReceipt = (month: string) => {
-    alert(`A descarregar recibo de pagamento de ${month}...`);
+    addToast(`A descarregar recibo: ${month}...`, 'info');
   };
 
-  // Financial Chart Data
-  const income = expenses.filter(e => e.type === 'Income').reduce((acc, curr) => acc + curr.amount, 0);
-  const expense = expenses.filter(e => e.type === 'Expense').reduce((acc, curr) => acc + curr.amount, 0);
+  // Mock Forum Reply
+  const handleSendReply = (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!replyText.trim()) return;
+    
+    addToast('Resposta publicada com sucesso!', 'success');
+    setReplyText('');
+    // In a real app, we would append to a list of posts here
+  };
+
+  // Filter Financial Records
+  const filteredExpenses = expenses.filter(record => {
+    if (!financeDateFilter.start && !financeDateFilter.end) return true;
+    const recordDate = new Date(record.date);
+    const start = financeDateFilter.start ? new Date(financeDateFilter.start) : null;
+    const end = financeDateFilter.end ? new Date(financeDateFilter.end) : null;
+
+    if (start && recordDate < start) return false;
+    if (end && recordDate > end) return false;
+    return true;
+  });
+
+  // Financial Chart Data (based on filtered data)
+  const income = filteredExpenses.filter(e => e.type === 'Income').reduce((acc, curr) => acc + curr.amount, 0);
+  const expense = filteredExpenses.filter(e => e.type === 'Expense').reduce((acc, curr) => acc + curr.amount, 0);
   const balance = income - expense;
 
   const pieData = [
@@ -374,46 +410,125 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
            </div>
         )}
 
-        {/* ... (Other tabs remain unchanged: FORUM, VOTING, PROJECTS, MEETINGS, FINANCE) ... */}
+        {/* TAB: FORUM */}
         {activeTab === 'forum' && (
            <div className="space-y-6 animate-in fade-in">
               <div className="flex justify-between items-center">
                  <h2 className="text-xl font-bold text-gray-900">Fórum de Discussão Interna</h2>
-                 <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Novo Tópico
-                 </button>
+                 {!selectedThread && (
+                   <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center gap-2">
+                      <Plus className="w-4 h-4" /> Novo Tópico
+                   </button>
+                 )}
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                 {MOCK_FORUM_THREADS.map(thread => (
-                    <div key={thread.id} className="p-6 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer">
-                       <div className="flex items-start justify-between">
-                          <div>
-                             <div className="flex items-center gap-2 mb-2">
-                                {thread.tags.map(tag => (
-                                   <span key={tag} className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
-                                      <Tag className="w-3 h-3" /> {tag}
-                                   </span>
-                                ))}
-                             </div>
-                             <h3 className="text-lg font-bold text-gray-900 mb-1">{thread.title}</h3>
-                             <p className="text-sm text-gray-500">Iniciado por <span className="font-medium text-gray-800">{thread.author}</span> • {thread.date}</p>
-                          </div>
-                          <div className="flex items-center gap-6 text-sm text-gray-500">
-                             <div className="text-center">
-                                <span className="block font-bold text-gray-900 text-lg">{thread.replies}</span>
-                                <span className="text-xs">Respostas</span>
-                             </div>
-                             <div className="text-right hidden sm:block">
-                                <p className="text-xs">Última atividade</p>
-                                <p className="font-medium text-gray-800">{thread.lastActivity}</p>
-                             </div>
-                             <ChevronRight className="w-5 h-5 text-gray-300" />
-                          </div>
-                       </div>
-                    </div>
-                 ))}
-              </div>
+              {selectedThread ? (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-in slide-in-from-right-4">
+                   {/* Thread Header */}
+                   <div className="p-6 border-b border-gray-200 bg-gray-50">
+                      <button onClick={() => setSelectedThread(null)} className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 mb-4">
+                         <ArrowLeft className="w-4 h-4" /> Voltar à lista
+                      </button>
+                      <div className="flex items-center gap-2 mb-2">
+                         {selectedThread.tags.map(tag => (
+                            <span key={tag} className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">
+                               {tag}
+                            </span>
+                         ))}
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedThread.title}</h2>
+                      <p className="text-sm text-gray-500">
+                         Iniciado por <span className="font-semibold">{selectedThread.author}</span> • {selectedThread.date}
+                      </p>
+                   </div>
+
+                   {/* Thread Content (Simulated) */}
+                   <div className="p-6 space-y-6">
+                      <div className="flex gap-4">
+                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 shrink-0">
+                            <User className="w-5 h-5" />
+                         </div>
+                         <div className="flex-1">
+                            <div className="bg-gray-50 p-4 rounded-xl rounded-tl-none border border-gray-100">
+                               <p className="text-gray-800 leading-relaxed">
+                                  Caros colegas, gostaria de abrir esta discussão para recolher feedback sobre a implementação do novo sistema. Tenho notado algumas latências durante os períodos de pico. Alguém mais verificou isto?
+                               </p>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* Mock Replies */}
+                      <div className="flex gap-4">
+                         <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0 font-bold text-xs">
+                            JS
+                         </div>
+                         <div className="flex-1">
+                            <div className="bg-blue-50 p-4 rounded-xl rounded-tl-none border border-blue-100">
+                               <p className="text-sm font-bold text-blue-900 mb-1">João Santos <span className="text-xs font-normal text-blue-400">• Há 2 horas</span></p>
+                               <p className="text-gray-800 leading-relaxed">
+                                  Confirmo. Especialmente na transição de setores. Já reportei à técnica.
+                               </p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Reply Input */}
+                   <div className="p-6 border-t border-gray-200 bg-gray-50">
+                      <form onSubmit={handleSendReply}>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">Responder ao tópico</label>
+                         <div className="flex gap-4">
+                            <textarea 
+                               value={replyText}
+                               onChange={(e) => setReplyText(e.target.value)}
+                               className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cv-blue outline-none resize-none"
+                               rows={3}
+                               placeholder="Escreva a sua resposta..."
+                            ></textarea>
+                            <button type="submit" className="bg-cv-blue text-white px-6 rounded-lg font-medium hover:bg-blue-800 transition flex flex-col items-center justify-center gap-1 h-auto">
+                               <Send className="w-5 h-5" />
+                               <span className="text-xs">Enviar</span>
+                            </button>
+                         </div>
+                      </form>
+                   </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                   {MOCK_FORUM_THREADS.map(thread => (
+                      <div 
+                        key={thread.id} 
+                        onClick={() => setSelectedThread(thread)}
+                        className="p-6 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer group"
+                      >
+                         <div className="flex items-start justify-between">
+                            <div>
+                               <div className="flex items-center gap-2 mb-2">
+                                  {thread.tags.map(tag => (
+                                     <span key={tag} className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
+                                        <Tag className="w-3 h-3" /> {tag}
+                                     </span>
+                                  ))}
+                               </div>
+                               <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-cv-blue transition-colors">{thread.title}</h3>
+                               <p className="text-sm text-gray-500">Iniciado por <span className="font-medium text-gray-800">{thread.author}</span> • {thread.date}</p>
+                            </div>
+                            <div className="flex items-center gap-6 text-sm text-gray-500">
+                               <div className="text-center">
+                                  <span className="block font-bold text-gray-900 text-lg">{thread.replies}</span>
+                                  <span className="text-xs">Respostas</span>
+                               </div>
+                               <div className="text-right hidden sm:block">
+                                  <p className="text-xs">Última atividade</p>
+                                  <p className="font-medium text-gray-800">{thread.lastActivity}</p>
+                               </div>
+                               <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-cv-blue" />
+                            </div>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+              )}
            </div>
         )}
 
@@ -518,13 +633,17 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
               
               <div className="grid grid-cols-1 gap-4">
                  {ASSOCIATION_PROJECTS.map((project) => (
-                    <div key={project.id} className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm hover:shadow-md transition">
-                       <div className="p-4 bg-blue-50 rounded-full">
+                    <div 
+                      key={project.id} 
+                      onClick={() => setSelectedProject(project)}
+                      className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm hover:shadow-md hover:border-blue-200 transition cursor-pointer group"
+                    >
+                       <div className="p-4 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
                           <FileText className="w-6 h-6 text-blue-600" />
                        </div>
                        <div className="flex-1 w-full">
                           <div className="flex flex-wrap justify-between items-start mb-2">
-                             <h3 className="text-lg font-bold text-gray-900">{project.title}</h3>
+                             <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{project.title}</h3>
                              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
                                 project.status === 'Aprovado' ? 'bg-green-100 text-green-800' : 
                                 project.status === 'Em Negociação' ? 'bg-amber-100 text-amber-800' : 
@@ -542,7 +661,10 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
                              </div>
                              <span className="text-sm font-bold text-blue-600">{project.progress}%</span>
                           </div>
-                          <p className="text-xs text-gray-400 mt-2">Responsável: {project.owner}</p>
+                          <div className="flex justify-between items-center mt-2">
+                             <p className="text-xs text-gray-400">Responsável: {project.owner}</p>
+                             <span className="text-xs text-blue-500 font-medium group-hover:underline">Ver Detalhes</span>
+                          </div>
                        </div>
                     </div>
                  ))}
@@ -691,8 +813,39 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
 
              {/* Recent Transactions Table */}
              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
                    <h3 className="font-bold text-gray-800">Últimos Movimentos da Tesouraria</h3>
+                   
+                   {/* DATE FILTER INPUTS */}
+                   <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5">
+                         <span className="text-gray-500 text-xs font-bold uppercase">De</span>
+                         <input 
+                           type="date" 
+                           className="outline-none text-gray-700 bg-transparent"
+                           value={financeDateFilter.start}
+                           onChange={(e) => setFinanceDateFilter({...financeDateFilter, start: e.target.value})}
+                         />
+                      </div>
+                      <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5">
+                         <span className="text-gray-500 text-xs font-bold uppercase">Até</span>
+                         <input 
+                           type="date" 
+                           className="outline-none text-gray-700 bg-transparent"
+                           value={financeDateFilter.end}
+                           onChange={(e) => setFinanceDateFilter({...financeDateFilter, end: e.target.value})}
+                         />
+                      </div>
+                      {(financeDateFilter.start || financeDateFilter.end) && (
+                        <button 
+                          onClick={() => setFinanceDateFilter({start: '', end: ''})}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="Limpar Filtro"
+                        >
+                           <X className="w-4 h-4" />
+                        </button>
+                      )}
+                   </div>
                 </div>
                 <div className="overflow-x-auto">
                    <table className="w-full text-sm text-left">
@@ -705,18 +858,26 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
                          </tr>
                       </thead>
                       <tbody>
-                         {expenses.map((record) => (
-                            <tr key={record.id} className="bg-white border-b hover:bg-gray-50">
-                               <td className="px-6 py-4 font-mono text-gray-500">{record.date}</td>
-                               <td className="px-6 py-4 font-medium text-gray-900">{record.description}</td>
-                               <td className="px-6 py-4">
-                                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{record.category}</span>
-                               </td>
-                               <td className={`px-6 py-4 text-right font-bold ${record.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
-                                  {record.type === 'Income' ? '+' : '-'} {record.amount.toLocaleString()} CVE
-                               </td>
-                            </tr>
-                         ))}
+                         {filteredExpenses.length > 0 ? (
+                           filteredExpenses.map((record) => (
+                              <tr key={record.id} className="bg-white border-b hover:bg-gray-50">
+                                 <td className="px-6 py-4 font-mono text-gray-500">{record.date}</td>
+                                 <td className="px-6 py-4 font-medium text-gray-900">{record.description}</td>
+                                 <td className="px-6 py-4">
+                                    <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{record.category}</span>
+                                 </td>
+                                 <td className={`px-6 py-4 text-right font-bold ${record.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {record.type === 'Income' ? '+' : '-'} {record.amount.toLocaleString()} CVE
+                                 </td>
+                              </tr>
+                           ))
+                         ) : (
+                           <tr>
+                             <td colSpan={4} className="px-6 py-8 text-center text-gray-500 italic">
+                               Nenhum registo encontrado para o período selecionado.
+                             </td>
+                           </tr>
+                         )}
                       </tbody>
                    </table>
                 </div>
@@ -725,6 +886,64 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
         )}
 
       </div>
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedProject(null)}>
+           <div 
+             className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+             onClick={e => e.stopPropagation()}
+           >
+              <div className="bg-gray-50 border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+                 <h3 className="font-bold text-gray-900 text-lg">Detalhes do Projeto</h3>
+                 <button onClick={() => setSelectedProject(null)} className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200">
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+              
+              <div className="p-6">
+                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase mb-4 ${
+                    selectedProject.status === 'Aprovado' ? 'bg-green-100 text-green-800' : 
+                    selectedProject.status === 'Em Negociação' ? 'bg-amber-100 text-amber-800' : 
+                    'bg-gray-100 text-gray-600'
+                 }`}>
+                    {selectedProject.status}
+                 </span>
+                 
+                 <h2 className="text-2xl font-bold text-gray-900 mb-3">{selectedProject.title}</h2>
+                 <p className="text-gray-600 leading-relaxed mb-6">{selectedProject.description}</p>
+                 
+                 <div className="space-y-4">
+                    <div>
+                       <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium text-gray-700">Progresso Geral</span>
+                          <span className="font-bold text-blue-600">{selectedProject.progress}%</span>
+                       </div>
+                       <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-600 rounded-full transition-all duration-1000" style={{ width: `${selectedProject.progress}%` }}></div>
+                       </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                          {selectedProject.owner.charAt(0)}
+                       </div>
+                       <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Responsável</p>
+                          <p className="font-medium text-gray-900">{selectedProject.owner}</p>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              
+              <div className="bg-gray-50 px-6 py-4 flex justify-end">
+                 <button onClick={() => setSelectedProject(null)} className="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition">
+                    Fechar
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   ShieldCheck, Users, FileText, Settings, Check, X, 
   Search, AlertTriangle, Bell, Plus, Trash2, Edit, 
   Save, DollarSign, TrendingUp, TrendingDown, BrainCircuit, Database, Upload, File, Loader2,
-  ToggleLeft, ToggleRight, MessageSquare, CreditCard, Lock, Globe
+  ToggleLeft, ToggleRight, MessageSquare, CreditCard, Lock, Globe, Download, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { 
   MOCK_REGISTRATION_REQUESTS, MOCK_NEWS, MOCK_NOTAMS, 
@@ -19,6 +19,8 @@ const INITIAL_MEMBERS: Member[] = [
   { id: '1', name: 'Carlos Delgado', license: 'CV-CTA-056', role: UserRole.CONTROLLER, status: 'Active', quotaStatus: 'Up-to-date' },
   { id: '2', name: 'Ana Silva', license: 'CV-CTA-088', role: UserRole.SUPERVISOR, status: 'Active', quotaStatus: 'Up-to-date' },
   { id: '3', name: 'João Mendes', license: 'CV-CTA-012', role: UserRole.ADMIN, status: 'Active', quotaStatus: 'Up-to-date' },
+  { id: '4', name: 'Beatriz Fortes', license: 'CV-CTA-092', role: UserRole.CONTROLLER, status: 'Inactive', quotaStatus: 'Overdue' },
+  { id: '5', name: 'Daniel Sousa', license: 'CV-CTA-045', role: UserRole.CONTROLLER, status: 'Active', quotaStatus: 'Up-to-date' },
 ];
 
 interface Props {
@@ -42,6 +44,9 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
   const [newsList, setNewsList] = useState<NewsItem[]>(MOCK_NEWS);
   const [notamList, setNotamList] = useState<Notam[]>(MOCK_NOTAMS);
   const [financials, setFinancials] = useState<FinancialRecord[]>(FINANCIAL_RECORDS);
+
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Member; direction: 'asc' | 'desc' } | null>(null);
 
   // Settings State
   const [systemConfig, setSystemConfig] = useState({
@@ -70,6 +75,54 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
   const [selectedFile, setSelectedFile] = useState<{name: string, data: string, type: string} | null>(null);
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [extractedContent, setExtractedContent] = useState('');
+
+  // --- SORTING LOGIC ---
+  const handleSort = (key: keyof Member) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedMembers = useMemo(() => {
+    let sortableItems = [...members];
+    
+    // 1. Filter
+    if (searchTerm) {
+      sortableItems = sortableItems.filter(m => 
+        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.license.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // 2. Sort
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        // Handle string comparisons carefully
+        const aValue = a[sortConfig.key]?.toString().toLowerCase() || '';
+        const bValue = b[sortConfig.key]?.toString().toLowerCase() || '';
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [members, searchTerm, sortConfig]);
+
+  const renderSortIcon = (columnKey: keyof Member) => {
+    if (sortConfig?.key !== columnKey) {
+      return <div className="w-4 h-4 ml-1 opacity-20"><ChevronUp className="w-3 h-3" /><ChevronDown className="w-3 h-3 -mt-1" /></div>;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="w-4 h-4 ml-1 text-cv-blue" /> 
+      : <ChevronDown className="w-4 h-4 ml-1 text-cv-blue" />;
+  };
 
   // --- PDF EXTRACTION LOGIC ---
   const extractTextFromPDF = async (file: File): Promise<string> => {
@@ -406,13 +459,13 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
               {/* Active Members Management */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                  <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <h3 className="font-bold text-gray-800">Membros Ativos</h3>
+                    <h3 className="font-bold text-gray-800">Membros Ativos ({sortedMembers.length})</h3>
                     <div className="relative">
                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                        <input 
                           type="text" 
-                          placeholder="Pesquisar membro..." 
-                          className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cv-blue outline-none"
+                          placeholder="Pesquisar membro ou licença..." 
+                          className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cv-blue outline-none w-64"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                        />
@@ -420,16 +473,40 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
                  </div>
                  <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                       <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                       <thead className="bg-gray-50 text-gray-500 uppercase text-xs select-none">
                           <tr>
-                             <th className="px-6 py-3">Membro</th>
-                             <th className="px-6 py-3">Função</th>
-                             <th className="px-6 py-3">Status</th>
+                             <th 
+                               className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                               onClick={() => handleSort('name')}
+                             >
+                                <div className="flex items-center">
+                                  Membro
+                                  {renderSortIcon('name')}
+                                </div>
+                             </th>
+                             <th 
+                               className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                               onClick={() => handleSort('role')}
+                             >
+                                <div className="flex items-center">
+                                  Função
+                                  {renderSortIcon('role')}
+                                </div>
+                             </th>
+                             <th 
+                               className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                               onClick={() => handleSort('status')}
+                             >
+                                <div className="flex items-center">
+                                  Status
+                                  {renderSortIcon('status')}
+                                </div>
+                             </th>
                              <th className="px-6 py-3 text-right">Gestão</th>
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-gray-100">
-                          {members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase())).map((member) => (
+                          {sortedMembers.map((member) => (
                              <tr key={member.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 font-medium text-gray-900">
                                    {member.name} <span className="block text-xs text-gray-500 font-mono font-normal">{member.license}</span>
@@ -462,6 +539,13 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
                                 </td>
                              </tr>
                           ))}
+                          {sortedMembers.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-6 py-8 text-center text-gray-500 italic">
+                                Nenhum membro encontrado.
+                              </td>
+                            </tr>
+                          )}
                        </tbody>
                     </table>
                  </div>
