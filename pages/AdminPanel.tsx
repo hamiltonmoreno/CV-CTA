@@ -643,7 +643,7 @@ const AdminPanel: React.FC<Props> = ({ knowledgeBase = [], onUpdateKnowledgeBase
            </div>
         )}
 
-        {/* --- TAB: SETTINGS (ENHANCED) --- */}
+        {/* --- TAB: SETTINGS --- */}
         {activeTab === 'settings' && (
            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 animate-in fade-in space-y-8">
               

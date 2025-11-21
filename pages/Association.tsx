@@ -505,7 +505,6 @@ const Association: React.FC<Props> = ({ userRole = UserRole.CONTROLLER, userProf
           </div>
         )}
 
-        {/* ... (Rest of the tabs: PROJECTS, MEETINGS, FINANCE - kept identical to preserve existing functionality) ... */}
         {activeTab === 'projects' && (
            <div className="space-y-6 animate-in fade-in">
               <div className="flex justify-between items-center">
