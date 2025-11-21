@@ -99,6 +99,16 @@ export interface MemberHistoryLog {
   performedBy: string; // "Sistema" or Admin Name
 }
 
+export interface RegistrationRequest {
+  id: string;
+  name: string;
+  email: string;
+  license: string;
+  airport: string;
+  date: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+}
+
 export interface Project {
   id: string;
   title: string;

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, FileText, CloudSun, ArrowRight, BookOpen, Search, Info, ExternalLink, Globe } from 'lucide-react';
+import { MapPin, CloudSun, ArrowRight, BookOpen, Info, ExternalLink, Globe, Link as LinkIcon, Building2 } from 'lucide-react';
 
 const PublicResources: React.FC = () => {
   return (
@@ -143,6 +143,53 @@ const PublicResources: React.FC = () => {
                <p className="text-sm text-gray-600">Decretos-lei e portarias que regem o setor da aviação civil em Cabo Verde.</p>
             </a>
           </div>
+        </div>
+      </div>
+
+      {/* Useful Links Section */}
+      <div className="max-w-7xl mx-auto px-4 mt-12 mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <LinkIcon className="w-6 h-6 text-gray-400" />
+          Links Úteis
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          
+          {/* Link: ANAC */}
+          <a href="https://www.aac.cv" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-cv-blue hover:shadow-md transition-all">
+             <div className="bg-blue-50 p-3 rounded-lg text-cv-blue">
+               <Building2 className="w-6 h-6" />
+             </div>
+             <div>
+               <h3 className="font-bold text-gray-900">AAC Cabo Verde</h3>
+               <p className="text-xs text-gray-500">Agência de Aviação Civil</p>
+             </div>
+             <ExternalLink className="w-4 h-4 text-gray-300 ml-auto" />
+          </a>
+
+          {/* Link: ASA */}
+          <a href="https://www.asa.cv" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-cv-blue hover:shadow-md transition-all">
+             <div className="bg-blue-50 p-3 rounded-lg text-cv-blue">
+               <Globe className="w-6 h-6" />
+             </div>
+             <div>
+               <h3 className="font-bold text-gray-900">ASA</h3>
+               <p className="text-xs text-gray-500">Aeroportos e Segurança Aérea</p>
+             </div>
+             <ExternalLink className="w-4 h-4 text-gray-300 ml-auto" />
+          </a>
+
+          {/* Link: INMG (Meteo) */}
+          <a href="https://inmg.gov.cv" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-cv-blue hover:shadow-md transition-all">
+             <div className="bg-amber-50 p-3 rounded-lg text-amber-600">
+               <CloudSun className="w-6 h-6" />
+             </div>
+             <div>
+               <h3 className="font-bold text-gray-900">INMG</h3>
+               <p className="text-xs text-gray-500">Instituto de Meteorologia</p>
+             </div>
+             <ExternalLink className="w-4 h-4 text-gray-300 ml-auto" />
+          </a>
+
         </div>
       </div>
 

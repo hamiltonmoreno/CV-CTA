@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MOCK_NEWS } from '../constants';
-import { ArrowRight, ShieldCheck, Globe2, Users, ChevronDown, Lock, MapPin, History, BarChart3, Target, Award } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Globe2, Users, Lock, MapPin, History, BarChart3, Target, Award, PlayCircle, Plane } from 'lucide-react';
 
 const Home: React.FC = () => {
   
@@ -53,22 +52,6 @@ const Home: React.FC = () => {
               >
                 Área do Associado
               </button>
-            </div>
-
-            {/* Institutional Navigation Anchors */}
-            <div className="pt-8 border-t border-gray-700/50 mt-8">
-               <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-4">Navegação Rápida</p>
-               <div className="flex flex-wrap gap-x-8 gap-y-2">
-                  <button onClick={() => scrollToSection('quem-somos')} className="text-sm text-gray-300 hover:text-blue-400 transition-colors flex items-center gap-1 group">
-                    Quem Somos <ChevronDown className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                  <button onClick={() => scrollToSection('contexto')} className="text-sm text-gray-300 hover:text-blue-400 transition-colors flex items-center gap-1 group">
-                    Contexto Geoestratégico <ChevronDown className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                  <button onClick={() => scrollToSection('historia')} className="text-sm text-gray-300 hover:text-blue-400 transition-colors flex items-center gap-1 group">
-                    História <ChevronDown className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-               </div>
             </div>
           </div>
         </div>
@@ -150,6 +133,68 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Real-time Map Simulation Section */}
+      <section className="py-20 bg-gray-100 relative overflow-hidden">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+               <div className="lg:w-1/2">
+                  <h2 className="text-sm font-bold text-cv-blue uppercase tracking-widest mb-3">Ao Vivo</h2>
+                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Tráfego em Tempo Real</h3>
+                  <p className="text-gray-600 mb-6 text-lg">
+                     Observe o fluxo contínuo de aeronaves que cruzam a FIR do Sal neste momento. Mais de 150 voos são geridos diariamente pelos nossos controladores.
+                  </p>
+                  <div className="flex items-center gap-3 mb-8">
+                     <span className="flex h-3 w-3 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                     </span>
+                     <span className="text-sm font-medium text-gray-700">Sinal Radar Ativo</span>
+                  </div>
+                  <Link to="/gallery" className="inline-flex items-center gap-2 bg-white text-gray-900 border border-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm group">
+                     <PlayCircle className="w-5 h-5 text-cv-blue" />
+                     Ver Galeria Multimédia
+                  </Link>
+               </div>
+               
+               {/* Map Container */}
+               <div className="lg:w-1/2 w-full h-[400px] bg-blue-900 rounded-2xl shadow-2xl overflow-hidden relative border border-gray-300 group">
+                  {/* Static Map Simulation */}
+                  <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-30 grayscale group-hover:grayscale-0 transition-all duration-700"></div>
+                  
+                  {/* Grid overlay */}
+                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(#ffffff10 1px, transparent 1px), linear-gradient(90deg, #ffffff10 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+                  {/* Animated Planes */}
+                  <div className="absolute top-1/4 left-1/4 animate-[pulse_4s_infinite]">
+                     <Plane className="w-6 h-6 text-yellow-400 transform rotate-45 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
+                     <span className="absolute -top-4 left-6 text-[10px] text-yellow-400 font-mono bg-black/50 px-1 rounded">TP218 FL360</span>
+                  </div>
+                  
+                  <div className="absolute bottom-1/3 right-1/3 animate-[pulse_5s_infinite]">
+                     <Plane className="w-6 h-6 text-yellow-400 transform -rotate-12 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
+                     <span className="absolute -top-4 left-6 text-[10px] text-yellow-400 font-mono bg-black/50 px-1 rounded">AF459 FL380</span>
+                  </div>
+
+                  <div className="absolute top-1/2 right-10 animate-[pulse_6s_infinite]">
+                     <Plane className="w-6 h-6 text-green-400 transform rotate-90 drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
+                     <span className="absolute -top-4 left-6 text-[10px] text-green-400 font-mono bg-black/50 px-1 rounded">VR602 FL120</span>
+                  </div>
+
+                  {/* Radar Sweep Effect */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                     <div className="w-[600px] h-[600px] border border-green-500/20 rounded-full relative animate-[spin_4s_linear_infinite]">
+                        <div className="absolute top-1/2 left-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent to-green-500/30 origin-left transform -translate-y-1/2"></div>
+                     </div>
+                  </div>
+                  
+                  <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur px-3 py-1 rounded text-xs text-green-400 font-mono">
+                     RADAR FEED: SIMULATION MODE
+                  </div>
+               </div>
+            </div>
+         </div>
+      </section>
+
       {/* The "Sal Oceanic FIR" Feature Section */}
       <section id="contexto" className="py-20 bg-gray-900 text-white overflow-hidden relative scroll-mt-20">
          <div className="absolute top-0 left-0 w-full h-full">
@@ -182,7 +227,7 @@ const Home: React.FC = () => {
             <div className="lg:w-1/2">
                <div className="relative rounded-2xl overflow-hidden border border-gray-700 shadow-2xl bg-gray-800">
                   <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Sal_Island_from_space.jpg" 
+                    src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
                     alt="Vista de Satélite Ilha do Sal" 
                     className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity duration-500"
                   />

@@ -1,5 +1,5 @@
 
-import { NewsItem, Notam, Document, OperationalStatus, FlightStat, Project, VoteProposal, Meeting, FinancialRecord, UserQuota, MemberHistoryLog, MemberProfile, UserRole } from './types';
+import { NewsItem, Notam, Document, OperationalStatus, FlightStat, Project, VoteProposal, Meeting, FinancialRecord, UserQuota, MemberHistoryLog, MemberProfile, UserRole, RegistrationRequest } from './types';
 
 export const APP_NAME = "CV-CTA Portal";
 
@@ -51,6 +51,54 @@ export const MOCK_NEWS: NewsItem[] = [
     date: '2025-09-01',
     category: 'Formação',
     imageUrl: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+  },
+  {
+    id: '7',
+    title: 'Novo Sistema de Comunicações Voz (VCS)',
+    summary: 'Implementação bem-sucedida do sistema digital de comunicações voz em todas as posições de controlo da FIR Sal.',
+    date: '2025-08-20',
+    category: 'Operacional',
+    imageUrl: 'https://images.unsplash.com/photo-1580894908361-967195033215?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+  },
+  {
+    id: '8',
+    title: 'Protocolo de Cooperação com a NAV Portugal',
+    summary: 'Intercâmbio de controladores e partilha de experiências na gestão de espaço aéreo oceânico.',
+    date: '2025-08-15',
+    category: 'Institucional',
+    imageUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+  },
+  {
+    id: '9',
+    title: 'Formação em Fatores Humanos',
+    summary: 'Workshop sobre gestão de erro e trabalho em equipa (TRM) para supervisores.',
+    date: '2025-08-10',
+    category: 'Formação',
+    imageUrl: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+  },
+  {
+    id: '10',
+    title: 'Renovação da Certificação do ATS',
+    summary: 'A AAC renovou o certificado de prestador de serviços de tráfego aéreo por mais 5 anos.',
+    date: '2025-08-05',
+    category: 'Institucional',
+    imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+  },
+  {
+    id: '11',
+    title: 'Procedimentos de Contingência Vulcânica',
+    summary: 'Simulação de ativação do plano de contingência devido a cinzas vulcânicas.',
+    date: '2025-07-30',
+    category: 'Operacional',
+    imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
+  },
+  {
+    id: '12',
+    title: 'Programa de Bem-estar Mental',
+    summary: 'Lançamento do programa de apoio psicológico e gestão de stress para controladores (CISM).',
+    date: '2025-07-25',
+    category: 'Institucional',
+    imageUrl: 'https://images.unsplash.com/photo-1544367563-12123d896889?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'
   }
 ];
 
@@ -284,3 +332,24 @@ export const MOCK_MEMBER_PROFILE: MemberProfile = {
     { id: '3', name: 'Guardião', icon: 'Shield', description: 'Membro da comissão de segurança.' }
   ]
 };
+
+export const MOCK_REGISTRATION_REQUESTS: RegistrationRequest[] = [
+  {
+    id: 'REQ-001',
+    name: 'Ana Pereira',
+    email: 'ana.pereira@asa.cv',
+    license: 'CV-CTA-2025-012',
+    airport: 'GVNP (Praia)',
+    date: '2025-10-12',
+    status: 'Pending'
+  },
+  {
+    id: 'REQ-002',
+    name: 'Jorge Santos',
+    email: 'jorge.s@asa.cv',
+    license: 'CV-CTA-2024-099',
+    airport: 'GVSV (São Vicente)',
+    date: '2025-10-13',
+    status: 'Pending'
+  }
+];

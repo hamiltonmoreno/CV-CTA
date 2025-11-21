@@ -14,12 +14,13 @@ import News from './pages/News';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PublicResources from './pages/PublicResources';
+import AdminPanel from './pages/AdminPanel';
 import Chatbot from './components/Chatbot';
 import ScrollToTop from './components/ScrollToTop';
 import { OperationalStatus, UserRole } from './types';
 
 // Layout Wrapper for standard pages (Header + Nav + Content + Footer)
-const MainLayout: React.FC<{isLoggedIn: boolean, onLogout: () => void}> = ({ isLoggedIn, onLogout }) => {
+const MainLayout: React.FC<{isLoggedIn: boolean, userRole?: UserRole, onLogout: () => void}> = ({ isLoggedIn, userRole, onLogout }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900 relative">
       <OperationalHeader 
@@ -27,7 +28,8 @@ const MainLayout: React.FC<{isLoggedIn: boolean, onLogout: () => void}> = ({ isL
         date="14 OUT 2025"
       />
       <Navbar 
-        isLoggedIn={isLoggedIn} 
+        isLoggedIn={isLoggedIn}
+        userRole={userRole} 
         onLogoutClick={onLogout}
       />
       <main className="flex-grow">
@@ -75,7 +77,7 @@ const App: React.FC = () => {
             isLoggedIn ? (
               <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} onLogoutClick={handleLogout} />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
                  <main className="flex-grow">
                     <Dashboard userRole={userRole} />
                  </main>
@@ -93,7 +95,7 @@ const App: React.FC = () => {
             isLoggedIn ? (
               <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
                  <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
-                 <Navbar isLoggedIn={isLoggedIn} onLogoutClick={handleLogout} />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
                  <main className="flex-grow">
                     <Association userRole={userRole} />
                  </main>
@@ -105,8 +107,26 @@ const App: React.FC = () => {
           } 
         />
 
+        <Route 
+          path="/admin" 
+          element={
+            isLoggedIn && userRole === UserRole.ADMIN ? (
+              <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 relative">
+                 <OperationalHeader status={OperationalStatus.NORMAL} date="14 OUT 2025" />
+                 <Navbar isLoggedIn={isLoggedIn} userRole={userRole} onLogoutClick={handleLogout} />
+                 <main className="flex-grow">
+                    <AdminPanel />
+                 </main>
+                 <Chatbot />
+              </div>
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          } 
+        />
+
         {/* Public Routes (Wrapped in MainLayout) */}
-        <Route element={<MainLayout isLoggedIn={isLoggedIn} onLogout={handleLogout} />}>
+        <Route element={<MainLayout isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} />}>
           <Route path="/" element={<Home />} />
           <Route path="/resources" element={<PublicResources />} />
           <Route path="/notams" element={<NotamsPage />} />

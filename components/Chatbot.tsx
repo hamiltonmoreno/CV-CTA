@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Loader2, Bot, FileText } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Bot, FileText, BrainCircuit } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { MOCK_DOCS, DOC_CONTENTS } from '../constants';
 
@@ -12,15 +13,15 @@ interface Message {
 
 // System instruction defines Persona and Constraints
 const SYSTEM_INSTRUCTION = `
-Você é o Assistente Virtual Inteligente do Portal CV-CTA.
+Você é o Assistente Virtual Inteligente do Portal CV-CTA (Controladores de Tráfego Aéreo de Cabo Verde).
 A sua função é responder a perguntas baseando-se ESTRITAMENTE no contexto dos documentos fornecidos na mensagem.
 
 REGRAS:
-1. Use as informações fornecidas na secção "CONTEXTO RECUPERADO" para responder.
+1. Analise profundamente o "CONTEXTO RECUPERADO".
 2. Se a resposta estiver no contexto, cite o nome do documento ou a versão se disponível.
 3. Se a resposta NÃO estiver no contexto, diga: "Desculpe, não encontrei essa informação nos documentos disponíveis (Manuais TWR, Fraseologia ou Regulamentos)."
 4. Não invente procedimentos que não estejam no contexto.
-5. Mantenha um tom profissional e direto.
+5. Mantenha um tom profissional, técnico e direto.
 `;
 
 const Chatbot: React.FC = () => {
@@ -105,18 +106,18 @@ PERGUNTA DO USUÁRIO: ${input}
 CONTEXTO RECUPERADO DOS DOCUMENTOS:
 ${contextText || "Nenhum documento relevante encontrado para os termos pesquisados."}
 
-Responda à pergunta do usuário utilizando apenas o contexto acima.
+Responda à pergunta do usuário utilizando apenas o contexto acima. Pense passo a passo antes de responder para garantir precisão técnica.
 `;
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // 3. GENERATE
+      // 3. GENERATE WITH THINKING MODE
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
-          temperature: 0.1, // Low temperature to strictly adhere to context
+          thinkingConfig: { thinkingBudget: 32768 }, // Max budget for deep reasoning
         },
       });
 
@@ -173,7 +174,7 @@ Responda à pergunta do usuário utilizando apenas o contexto acima.
               <h3 className="font-bold text-sm">Assistente CV-CTA</h3>
               <p className="text-xs text-blue-100 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                RAG System Active
+                Gemini 3 Pro (Thinking)
               </p>
             </div>
           </div>
@@ -211,7 +212,12 @@ Responda à pergunta do usuário utilizando apenas o contexto acima.
               <div className="flex justify-start">
                 <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-cv-blue" />
-                  <span className="text-xs text-gray-500">Consultando manuais...</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-700 font-medium">Analisando documentação...</span>
+                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                       <BrainCircuit className="w-3 h-3" /> Thinking Mode Active
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -226,7 +232,7 @@ Responda à pergunta do usuário utilizando apenas o contexto acima.
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Ex: Qual a versão do manual TWR?"
+                placeholder="Ex: Qual a separação mínima RVSM?"
                 className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
                 disabled={isLoading}
               />
